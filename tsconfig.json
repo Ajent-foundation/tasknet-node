@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "allowJs": true,
+    "strict": false,
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "noEmitOnError": false,
+    "paths": {
+      "*": ["node_modules/*"],
+      "@/*": ["src/frontend/app/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/services/scraper-service-ts/**/*"
+  ]
+}
