@@ -119,7 +119,7 @@ const config: ForgeConfig = {
                     x: 200,
                     y: 160,
                     type: 'file',
-                    path: './out/TaskNet-darwin-arm64/TaskNet.app'
+                    path: './out/Tasknet Node-darwin-arm64/Tasknet Node.app'
                 },
                 {
                     x: 400,
