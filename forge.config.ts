@@ -111,7 +111,7 @@ const config: ForgeConfig = {
             }
         }, ['linux']), 
         new MakerDmg({
-            appPath: './out/TaskNet-darwin-arm64/TaskNet.app',
+            appPath: './out/Tasknet Node-darwin-arm64/Tasknet Node.app',
             background: './images/dmg-background.png',
             format: 'UDZO',
             contents: [
