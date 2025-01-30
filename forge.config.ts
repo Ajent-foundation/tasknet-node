@@ -141,8 +141,8 @@ const config: ForgeConfig = {
             authToken: process.env.GITHUB_TOKEN,
             generateReleaseNotes: true,
             repository: {
-                owner: 'dapi-co',
-                name: 'task-net'
+                owner: 'Ajent-foundation',
+                name: 'tasknet-node'
             },
         })
     ]
