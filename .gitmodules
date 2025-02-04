@@ -1,6 +1,6 @@
-[submodule "src/services/browser-cmgr-ts"]
-	path = src/services/browser-cmgr-ts
-	url = https://github.com/dapi-co/browser-cmgr-ts.git
 [submodule "src/services/scraper-service-ts"]
 	path = src/services/scraper-service-ts
 	url = https://github.com/dapi-co/scraper-service-ts.git
+[submodule "src/services/browser-cmgr-ts"]
+	path = src/services/browser-cmgr-ts
+	url = https://github.com/Ajent-foundation/browser-cmgr
