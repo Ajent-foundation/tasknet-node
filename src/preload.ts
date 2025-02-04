@@ -27,4 +27,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     killMobileNode: () => ipcRenderer.invoke('kill-mobile-node'),
     isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected'),
     updateMobileNodeApiKey: (apiKey: string) => ipcRenderer.invoke('update-mobile-node-api-key', apiKey),
+    updateApiKey: (apiKeyId: string, apiKey: string) => ipcRenderer.invoke('update-api-key', apiKeyId, apiKey),
 });

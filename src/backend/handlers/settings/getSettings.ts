@@ -1,7 +1,10 @@
 import { Settings, store } from "../../../store";
 
 export function getSettings(): Settings {
-    return store.get('settings', { openAIKey: '', anthropicKey: '', mobileNodeKey: '', numOfBrowser: 4 }) as Settings;
+    return store.get('settings', { 
+        openAIKey: '', anthropicKey: '', mobileNodeKey: '', numOfBrowser: 4,
+        apiKeyId: '', apiKey: ''
+    }) as Settings;
 }
 
 export function updateSettings(_:unknown, newSettings: Partial<Settings>): void {

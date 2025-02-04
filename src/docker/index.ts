@@ -23,15 +23,26 @@ function findDockerExecutable(): string | null {
   const dockerPaths =
     process.platform === "darwin"
       ? [
-          "/usr/local/bin/docker",
-          "/opt/homebrew/bin/docker",
-          "/Applications/Docker.app/Contents/Resources/bin/docker",
+          '/usr/local/bin/docker',
+          '/opt/homebrew/bin/docker',
+          '/usr/bin/docker',
+          '/Applications/Docker.app/Contents/Resources/bin/docker',
+          '~/Library/Group Containers/group.com.docker/docker'
         ]
       : process.platform === "linux"
-      ? ["/usr/bin/docker", "/usr/local/bin/docker"]
-      : [
-          "C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe",
-          "C:\\Program Files\\Docker\\Docker\\resources\\docker.exe",
+      ? [
+        '/usr/bin/docker',
+        '/usr/local/bin/docker',
+        '/opt/bin/docker',
+        '/snap/bin/docker',
+        '/var/lib/snapd/snap/bin/docker',
+        '~/.docker/cli-plugins/docker'
+      ]
+      : [    
+          'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
+          'C:\\Program Files (x86)\\Docker\\Docker\\resources\\bin\\docker.exe',
+          '%ProgramFiles%\\Docker\\Docker\\resources\\bin\\docker.exe',
+          '%ProgramW6432%\\Docker\\Docker\\resources\\bin\\docker.exe'
         ];
 
   for (const dockerPath of dockerPaths) {

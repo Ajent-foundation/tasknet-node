@@ -9,7 +9,7 @@ import fs from 'fs';
 // Handlers
 export async function getNodesInfo() {
     try {
-        const response = await fetch(`${REVERSE_PROXY_URI}/api/info`);
+        const response = await fetch(`${REVERSE_PROXY_URI}/v1/operators/info`);
         const data = await response.json();
         return data;
     } catch (error) {
@@ -20,8 +20,8 @@ export async function getNodesInfo() {
 
 
 export async function getPoints() {
-    try {
-        const response = await fetch(`${REVERSE_PROXY_URI}/api/points`);
+    try {        
+        const response = await fetch(`${REVERSE_PROXY_URI}/v1/points`);
         const data = await response.json();
 
         // if the response is not ok, return -1

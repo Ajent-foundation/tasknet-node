@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import { app, BrowserWindow } from "electron";
 import { io } from "socket.io-client";
-import { REVERSE_PROXY_URI } from "../../constants";
+import { REVERSE_PROXY_WS_URI } from "../../constants";
 import { startPOC, stopPOC } from '../../../services/browser-cmgr';
 import { startScraper, stopScraper } from '../../../services/scraper-service';
 import { getSettings } from "../settings/getSettings";
@@ -37,16 +37,24 @@ async function findDockerExecutable(): Promise<string | null> {
         ? [
             '/usr/local/bin/docker',
             '/opt/homebrew/bin/docker',
-            '/Applications/Docker.app/Contents/Resources/bin/docker'
+            '/usr/bin/docker',
+            '/Applications/Docker.app/Contents/Resources/bin/docker',
+            '~/Library/Group Containers/group.com.docker/docker'
         ]
         : process.platform === 'linux'
         ? [
             '/usr/bin/docker',
-            '/usr/local/bin/docker'
+            '/usr/local/bin/docker',
+            '/opt/bin/docker',
+            '/snap/bin/docker',
+            '/var/lib/snapd/snap/bin/docker',
+            '~/.docker/cli-plugins/docker'
         ]
         : [
             'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
-            'C:\\Program Files\\Docker\\Docker\\resources\\docker.exe'
+            'C:\\Program Files (x86)\\Docker\\Docker\\resources\\bin\\docker.exe',
+            '%ProgramFiles%\\Docker\\Docker\\resources\\bin\\docker.exe',
+            '%ProgramW6432%\\Docker\\Docker\\resources\\bin\\docker.exe'
         ];
 
     for (const dockerPath of dockerPaths) {
@@ -237,10 +245,14 @@ export async function connectSocket(
             return { status: 'already_connected' };
         }
 
-        globalState.socket = io(REVERSE_PROXY_URI, {
+        globalState.socket = io(REVERSE_PROXY_WS_URI, {
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
+            extraHeaders: {
+                'X-Api-Key-Id': currentSettings.apiKeyId,
+                'X-Api-Key': currentSettings.apiKey
+            }
         });
   
         globalState.socket.on('connect', () => {
@@ -315,8 +327,7 @@ export async function connectSocket(
             clientInfo,
             publicKey: config.publicKey,
             version: app.getVersion(),
-            apiKey: currentSettings.mobileNodeKey,
-            numOfBrowser: currentSettings.numOfBrowser
+            numOfBrowsers: currentSettings.numOfBrowser || 0
           });
         } else {
           throw new Error("Client ID or client info not found");
@@ -417,5 +428,12 @@ export async function isMobileConnected() {
 export async function updateMobileNodeApiKey(apiKey: string) {
     const settings = getSettings();
     settings.mobileNodeKey = apiKey;
+    store.set('settings', settings);
+}
+
+export async function updateApiKey(apiKeyId: string, apiKey: string) {
+    const settings = getSettings();
+    settings.apiKeyId = apiKeyId;
+    settings.apiKey = apiKey;
     store.set('settings', settings);
 }

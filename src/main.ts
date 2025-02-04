@@ -10,7 +10,7 @@ import {
     connectSocket, disconnectSocket, isSocketConnected, 
     stopServices, getServicesStatus, 
     forceKillAtPort,
-    startMobileNode, killMobileNode, isMobileConnected, updateMobileNodeApiKey
+    startMobileNode, killMobileNode, isMobileConnected, updateMobileNodeApiKey, updateApiKey
 } from './backend/handlers/socket';
 import { init, checkDocker } from './backend/handlers/init';
 import { stopPOC as gracefulShutdownPOC} from './services/browser-cmgr';
@@ -163,3 +163,4 @@ ipcMain.handle('start-mobile-node', startMobileNode);
 ipcMain.handle('update-mobile-node-api-key', (event, apiKey: string) => updateMobileNodeApiKey(apiKey));
 ipcMain.handle('kill-mobile-node', killMobileNode);
 ipcMain.handle('is-mobile-connected', isMobileConnected);
+ipcMain.handle('update-api-key', (event, apiKeyId: string, apiKey: string) => updateApiKey(apiKeyId, apiKey));

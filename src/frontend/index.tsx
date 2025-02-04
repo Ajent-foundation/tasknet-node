@@ -26,6 +26,7 @@ declare global {
             killMobileNode: () => Promise<void>;
             isMobileConnected: () => Promise<boolean>;
             updateMobileNodeApiKey: (apiKey: string) => Promise<void>;
+            updateApiKey: (apiKeyId: string, apiKey: string) => Promise<void>;
         }
     }
 }

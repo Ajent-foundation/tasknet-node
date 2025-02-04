@@ -65,7 +65,9 @@ export default function Page() : JSX.Element {
         openAIKey: string,
         anthropicKey: string,
         mobileNodeKey: string,
-        numOfBrowser: number
+        numOfBrowser: number,
+        apiKeyId: string,
+        apiKey: string
     } | null>(null);
     useEffect(() => {
         window.electronAPI.getSettings().then((settings) => {
@@ -359,6 +361,7 @@ export default function Page() : JSX.Element {
                                     setIsAppleConnecting(false);
                                     setIsMobileConnecting(false);
                                     setIsConnecting(false);
+                                    setNumBrowsers(settings?.numOfBrowser || 0);
                                 }, 10000);
                             }).catch(error => {
                                 console.error('Failed to toggle Apple connections:', error);
@@ -457,25 +460,33 @@ export default function Page() : JSX.Element {
                                                     openaiKey={settings?.openAIKey}
                                                     anthropicKey={settings?.anthropicKey}
                                                     numOfBrowser={settings?.numOfBrowser}
+                                                    apiKeyId={settings?.apiKeyId}
+                                                    apiKey={settings?.apiKey}
                                                     onKeysChange={(
                                                         openaiKey: string,
                                                         anthropicKey: string,
                                                         mobileNodeKey: string,
-                                                        numOfBrowser: number
+                                                        numOfBrowser: number,
+                                                        apiKeyId: string,
+                                                        apiKey: string
                                                     ) => {
                                                         window.electronAPI.updateSettings({
                                                             openAIKey: openaiKey,
                                                             anthropicKey: anthropicKey,
                                                             mobileNodeKey: mobileNodeKey,
-                                                            numOfBrowser: numOfBrowser
-                                                        }).then((settings) => {
-                                                            console.log("Settings", settings);
+                                                            numOfBrowser: numOfBrowser,
+                                                            apiKeyId: apiKeyId,
+                                                            apiKey: apiKey
+                                                        }).then(() => {
                                                             // //Close settings
                                                             // setView("dashboard");
                                                             // setSelectedView(items.find(item => item.id === "dashboard") || defaultSelectedView);
                                                             //getUpdated settings
                                                             window.electronAPI.getSettings().then((settings) => {
+                                                                console.log("Settings", settings);
+
                                                                 window.electronAPI.updateMobileNodeApiKey(settings.mobileNodeKey);
+                                                                window.electronAPI.updateApiKey(settings.apiKeyId, settings.apiKey);
                                                                 setSettings(settings);
                                                             });
                                                         })

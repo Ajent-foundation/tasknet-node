@@ -9,24 +9,32 @@ export interface IProps {
     openaiKey: string;
     anthropicKey: string;
     mobileNodeKey: string;
+    apiKeyId: string;
+    apiKey: string;
     numOfBrowser: number
-    onKeysChange: (openaiKey: string, anthropicKey: string, mobileNodeKey: string, numOfBrowser:number) => void;
+    onKeysChange: (openaiKey: string, anthropicKey: string, mobileNodeKey: string, numOfBrowser:number, apiKeyId: string, apiKey: string) => void;
 }
 
 
-export default function View({ publicKey, privateKey, openaiKey, anthropicKey, mobileNodeKey, onKeysChange, numOfBrowser }: IProps) : JSX.Element {
+export default function View({ publicKey, privateKey, openaiKey, anthropicKey, mobileNodeKey, apiKeyId, apiKey, onKeysChange, numOfBrowser }: IProps) : JSX.Element {
     const [copiedPublicKey, setCopiedPublicKey] = useState(false);
     const [copiedPrivateKey, setCopiedPrivateKey] = useState(false);
     const [copiedOpenAI, setCopiedOpenAI] = useState(false);
     const [copiedAnthropic, setCopiedAnthropic] = useState(false);
     const [showPrivateKey, setShowPrivateKey] = useState(false);
     const [copiedMobileNode, setCopiedMobileNode] = useState(false);
+    const [copiedApiKey, setCopiedApiKey] = useState(false);
+    const [copiedApiKeyId, setCopiedApiKeyId] = useState(false);
     const [openaiInputKey, setOpenaiInputKey] = useState(openaiKey);
     const [anthropicInputKey, setAnthropicInputKey] = useState(anthropicKey);
     const [mobileNodeInputKey, setMobileNodeInputKey] = useState(mobileNodeKey);
+    const [apiKeyIdInputKey, setApiKeyIdInputKey] = useState(apiKeyId);
+    const [apiKeyInputKey, setApiKeyInputKey] = useState(apiKey);
     const [showOpenAIKey, setShowOpenAIKey] = useState(false);
     const [showAnthropicKey, setShowAnthropicKey] = useState(false);
     const [showMobileNodeKey, setShowMobileNodeKey] = useState(false);
+    const [showApiKey, setShowApiKey] = useState(false);
+    const [showApiKeyId, setShowApiKeyId] = useState(false);
     const [browserCount, setBrowserCount] = useState(numOfBrowser);
     const paperSx = {
         borderRadius: "4px",
@@ -82,7 +90,7 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
         width: '100%'
     }
 
-    const handleCopy = (field: 'public' | 'private' | 'openai' | 'anthropic' | 'mobileNode', value: string) => {
+    const handleCopy = (field: 'public' | 'private' | 'openai' | 'anthropic' | 'mobileNode' | 'apiKey' | 'apiKeyId', value: string) => {
         navigator.clipboard.writeText(value).then(() => {
             switch (field) {
                 case 'public':
@@ -105,6 +113,14 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
                     setCopiedMobileNode(true);
                     setTimeout(() => setCopiedMobileNode(false), 2000);
                     break;
+                case 'apiKey':
+                    setCopiedApiKey(true);
+                    setTimeout(() => setCopiedApiKey(false), 2000);
+                    break;
+                case 'apiKeyId':
+                    setCopiedApiKeyId(true);
+                    setTimeout(() => setCopiedApiKeyId(false), 2000);
+                    break;
             }
         });
     };
@@ -112,6 +128,8 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
     const hasChanges = openaiInputKey !== openaiKey || 
                       anthropicInputKey !== anthropicKey || 
                       mobileNodeInputKey !== mobileNodeKey ||
+                      apiKeyIdInputKey !== apiKeyId ||
+                      apiKeyInputKey !== apiKey ||
                       browserCount !== numOfBrowser;
 
     return (
@@ -386,6 +404,7 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
                                 </Tooltip>
                             </Box>
                         </Box>
+                        {/*
                         <Box display="flex" flexDirection="column" gap="6px">
                             <Typography sx={labelSx}>Node API Key</Typography>
                             <Box sx={{ display: 'flex', gap: '8px' }}>
@@ -442,6 +461,122 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
                                     </Box>
                                 </Tooltip>
                             </Box>
+                        </Box>*/}
+                        <Box display="flex" flexDirection="row" gap="8px">
+                            <Box display="flex" flexDirection="column" gap="6px" width={"35%"}>
+                                <Typography sx={labelSx}>API Key ID</Typography>
+                                <Box sx={{ display: 'flex', gap: '8px' }}>
+                                    <TextField 
+                                        type={showApiKeyId ? "text" : "password"}
+                                        placeholder="Enter your API Key ID"
+                                        value={apiKeyIdInputKey}
+                                        onChange={(e) => setApiKeyIdInputKey(e.target.value)}
+                                        sx={inputSx}
+                                        fullWidth
+                                        variant="outlined"
+                                        slotProps={{
+                                            input: {
+                                                endAdornment: (
+                                                    <IconButton
+                                                        onClick={() => setShowApiKeyId(!showApiKeyId)}
+                                                        edge="end"
+                                                    >
+                                                        {showApiKeyId ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                                    </IconButton>
+                                                ),
+                                            }
+                                        }}
+                                    />
+                                    <Tooltip 
+                                        open={copiedApiKeyId}
+                                        title="Copied!"
+                                        placement="top"
+                                        arrow
+                                        onClose={() => setCopiedApiKeyId(false)}
+                                    >
+                                        <Box
+                                            width="40px"
+                                            height="40px"
+                                            display="flex"
+                                            alignItems="center"
+                                            justifyContent="center"
+                                            sx={{ 
+                                                cursor: 'pointer',
+                                                border: '1px solid #E4E4E7',
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s ease-in-out',
+                                                '&:hover': {
+                                                    backgroundColor: '#F4F4F5'
+                                                }
+                                            }}
+                                            onClick={() => handleCopy('apiKeyId', apiKeyId)}
+                                        >
+                                            {copiedApiKeyId ? (
+                                                <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
+                                            ) : (
+                                                <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
+                                            )}
+                                        </Box>
+                                    </Tooltip>
+                                </Box>
+                            </Box>
+                            <Box display="flex" flexDirection="column" gap="6px" flexGrow={1}>
+                                <Typography sx={labelSx}>Node API Key</Typography>
+                                <Box sx={{ display: 'flex', gap: '8px' }}>
+                                    <TextField 
+                                        type={showApiKey ? "text" : "password"}
+                                        placeholder="Enter your API Key"
+                                        value={apiKeyInputKey}
+                                        onChange={(e) => setApiKeyInputKey(e.target.value)}
+                                        sx={inputSx}
+                                        fullWidth
+                                        variant="outlined"
+                                        slotProps={{
+                                            input: {
+                                                endAdornment: (
+                                                    <IconButton
+                                                        onClick={() => setShowApiKey(!showApiKey)}
+                                                        edge="end"
+                                                    >
+                                                        {showApiKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                                    </IconButton>
+                                                ),
+                                            }
+                                        }}
+                                    />
+                                    <Tooltip 
+                                        open={copiedApiKey}
+                                        title="Copied!"
+                                        placement="top"
+                                        arrow
+                                        onClose={() => setCopiedApiKey(false)}
+                                    >
+                                        <Box
+                                            width="40px"
+                                            height="40px"
+                                            display="flex"
+                                            alignItems="center"
+                                            justifyContent="center"
+                                            sx={{ 
+                                                cursor: 'pointer',
+                                                border: '1px solid #E4E4E7',
+                                                borderRadius: '4px',
+                                                transition: 'all 0.2s ease-in-out',
+                                                '&:hover': {
+                                                    backgroundColor: '#F4F4F5'
+                                                }
+                                            }}
+                                            onClick={() => handleCopy('apiKey', apiKey)}
+                                        >
+                                            {copiedApiKey ? (
+                                                <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
+                                            ) : (
+                                                <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
+                                            )}
+                                        </Box>
+                                    </Tooltip>
+                                </Box>
+                            </Box>
                         </Box>
                         <Box display="flex" flexDirection="column" gap="6px" mt="16px">
                             <Typography sx={labelSx}>Number of Browsers: {browserCount}</Typography>
@@ -471,7 +606,7 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
                                 color="primary" 
                                 disabled={!hasChanges}
                                 sx={{width:"100%"}}
-                                onClick={() => onKeysChange(openaiInputKey, anthropicInputKey, mobileNodeInputKey, browserCount)}
+                                onClick={() => onKeysChange(openaiInputKey, anthropicInputKey, mobileNodeInputKey, browserCount, apiKeyIdInputKey, apiKeyInputKey)}
                             >
                                 Save
                             </Button>

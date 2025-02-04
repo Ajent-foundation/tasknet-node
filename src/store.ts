@@ -17,6 +17,8 @@ export interface Settings {
     anthropicKey:string,
     mobileNodeKey:string
     numOfBrowser: number
+    apiKeyId: string,
+    apiKey: string
 }
 
 export const store = new Store();
