@@ -21,6 +21,7 @@ import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
 updateElectronApp({
     updateSource: {
       type: UpdateSourceType.ElectronPublicUpdateService,
+      host: "https://update.electronjs.org",
       repo: 'Ajent-foundation/tasknet-node'
     },
     updateInterval: '1 hour',
