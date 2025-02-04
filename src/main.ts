@@ -17,8 +17,14 @@ import { stopPOC as gracefulShutdownPOC} from './services/browser-cmgr';
 import { stopScraper as gracefulShutdownScraper} from './services/scraper-service';
 import { getSettings, updateSettings } from './backend/handlers/settings/getSettings';
 import fs from 'fs';
-import { updateElectronApp } from 'update-electron-app';
-updateElectronApp()
+import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
+updateElectronApp({
+    updateSource: {
+      type: UpdateSourceType.ElectronPublicUpdateService,
+      repo: 'Ajent-foundation/tasknet-node'
+    },
+    updateInterval: '1 hour',
+  })
 
 export const globalState: GlobalState = {
     mainWindow: null,
@@ -46,6 +52,7 @@ if (require('electron-squirrel-startup')) {
 }
 
 import { autoUpdater } from 'electron-updater';
+import { baseURL } from './services/scraper-service-ts/src/apis/maaas/requests/base';
 const logFile = path.join(app.getPath('userData'), 'crash.log');
 
 app.whenReady().then(async () => {
