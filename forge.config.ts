@@ -43,14 +43,13 @@ const config: ForgeConfig = {
         osxSign: {
             identity: process.env.IDENTITY,
         },
-        //osxNotarize configuration
+        osxNotarize: {
+            appleId: process.env.APPLE_ID || '',
+            teamId: process.env.APPLE_TEAM_ID || '',
+            appleIdPassword: process.env.APPLE_ID_PASSWORD || ''
+        },
     },
     plugins: [
-        // osxNotarize: {
-        //     appleId: process.env.APPLE_ID || '',
-        //     teamId: process.env.APPLE_TEAM_ID || '',
-        //     appleIdPassword: process.env.APPLE_ID_PASSWORD || ''
-        // }
         new WebpackPlugin({
             mainConfig,
             renderer: {
