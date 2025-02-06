@@ -19,6 +19,7 @@ export interface GlobalState {
   mainWindow: BrowserWindow | null;
   socket: Socket | null;
   tray: Tray | null;
+  isConnected: boolean;
 }
 
 declare global {

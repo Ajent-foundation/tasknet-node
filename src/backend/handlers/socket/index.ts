@@ -34,7 +34,7 @@ export async function connectSocket(
 
         globalState.socket = io(`${settings.wsProtocol}://${settings.serverIpOrDomain}:${settings.serverPort}`, {
             reconnection: true,
-            reconnectionAttempts: 5,
+            reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
             extraHeaders: {
                 'X-Api-Key-Id': settings.apiKeyId,
@@ -44,17 +44,36 @@ export async function connectSocket(
   
         globalState.socket.on('connect', () => {
             console.log("Socket connected");
+            globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
+            
+            // Self Register
+            const clientId = store.get('clientId');
+            const clientInfo = store.get('clientInfo');
+            if(clientId && clientInfo) {  
+                globalState.socket.emit('register', { 
+                    clientId,
+                    clientInfo,
+                    publicKey: config.publicKey,
+                    version: app.getVersion(),
+                    numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
+                });
+            } else {
+                throw new Error("Client ID or client info not found");
+            }
         });
   
         globalState.socket.on('connect_error', (error) => {
             console.error('Socket.IO connection error:', error);
-            mainWindow?.webContents.send('socket-status', 'error');
+            if(globalState.isConnected){
+                mainWindow?.webContents.send('socket-status', 'error');
+            }
         });
   
         globalState.socket.on('disconnect', (reason) => {
             console.log('Socket disconnected:', reason);
             mainWindow?.webContents.send('socket-status', 'disconnected');
+            globalState.socket?.connect();
         });
   
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
@@ -162,22 +181,7 @@ export async function connectSocket(
             globalState.socket?.off(`proxy-ws-message:${requestId}`);
         });
         */
-  
-        // Self Register
-        const clientId = store.get('clientId');
-        const clientInfo = store.get('clientInfo');
-        if(clientId && clientInfo) {  
-            globalState.socket.emit('register', { 
-                clientId,
-                clientInfo,
-                publicKey: config.publicKey,
-                version: app.getVersion(),
-                numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
-            });
-        } else {
-          throw new Error("Client ID or client info not found");
-        }
-  
+
         return { 
             status: 'connected'
         };
@@ -189,6 +193,7 @@ export async function connectSocket(
   
 export async function  disconnectSocket(){
     console.log("Disconnecting socket")
+    globalState.isConnected = false;
     try {
         stopServices();
         if (!globalState.socket) {

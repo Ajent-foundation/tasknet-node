@@ -40,6 +40,7 @@ updateElectronApp({
 
 export const globalState: GlobalState = {
     mainWindow: null,
+    isConnected: false,
     socket: null,
     tray: null,
 };
