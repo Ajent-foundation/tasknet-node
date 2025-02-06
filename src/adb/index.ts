@@ -1,7 +1,7 @@
 import { exec } from "child_process";
 import path from "path";
 import fs from "fs";
-import { app, BrowserWindow } from "electron";
+import { app } from "electron";
 
 import { logToFile } from "../services/mobile";
 

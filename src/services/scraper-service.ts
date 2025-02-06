@@ -10,6 +10,7 @@ const BASE_LOGS_PATH = app.isPackaged
 const SCRAPER_LOG_FILE = path.join(BASE_LOGS_PATH, "scraper-service-ts-out.log")
 
 export async function startScraper(
+    cmgrUrl: string,
     openAIKey?: string,
     anthropicKey?: string
 ){
@@ -17,6 +18,7 @@ export async function startScraper(
 
     try{
         await main("Prod", {
+            BROWSER_POC_SERVICE: cmgrUrl,
             EXPRESS_PORT: "8051",
             OPENAI_API_KEY: openAIKey,
             ANTHROPIC_API_KEY: anthropicKey

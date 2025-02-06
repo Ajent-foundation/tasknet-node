@@ -26,7 +26,6 @@ export function createWindow() {
     }
 
     // Create the browser window.
-    console.log(appIconPath);
     const mainWindow = new BrowserWindow({
         height: 900,
         width: 1280,
@@ -145,8 +144,6 @@ export function showWindow(window: BrowserWindow, callback: (newWindow: BrowserW
         if (window.isMinimized()) window.restore();
         window.show();
         window.focus();
-        // Reset the window icon
-        //window.setIcon(appIconPath);
     }
     callback(window);
 }

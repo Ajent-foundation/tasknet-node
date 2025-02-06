@@ -17,16 +17,15 @@ declare global {
             isConnected: () => Promise<boolean>;
             readServiceLogs: (serviceName: string, logType: 'out' | 'err') => Promise<string>;
             getServicesHealth: () => Promise<{service: string, isRunning: boolean}[]>;
+            getServicesStatus: () => Promise<any>;
             checkDocker: () => Promise<boolean>;
             init: () => Promise<{publicKey: string, privateKey: string, version: string}>;
             getSettings: () => Promise<Settings>;
-            updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
+            updateSettings: (newSettings: Partial<Settings>) => Promise<Settings>;
             getPoints: () => Promise<{points: number}>;
             startMobileNode: () => Promise<void>;
             killMobileNode: () => Promise<void>;
             isMobileConnected: () => Promise<boolean>;
-            updateMobileNodeApiKey: (apiKey: string) => Promise<void>;
-            updateApiKey: (apiKeyId: string, apiKey: string) => Promise<void>;
         }
     }
 }

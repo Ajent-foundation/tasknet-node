@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThemeOptions, ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Typography } from "@mui/material";
+import { Settings as ISettings } from "../../store";
 
 export const theme: ThemeOptions = createTheme({
     spacing: 1,
@@ -61,14 +62,7 @@ export default function Page() : JSX.Element {
     const [myPoints, setMyPoints] = useState("Points: coming soon!");
     const [warning, setWarning] = useState<string | undefined>(undefined);
 
-    const [settings, setSettings] = useState<{
-        openAIKey: string,
-        anthropicKey: string,
-        mobileNodeKey: string,
-        numOfBrowser: number,
-        apiKeyId: string,
-        apiKey: string
-    } | null>(null);
+    const [settings, setSettings] = useState<ISettings | null>(null);
     useEffect(() => {
         window.electronAPI.getSettings().then((settings) => {
             console.log("Settings", settings);
@@ -141,6 +135,7 @@ export default function Page() : JSX.Element {
     ]
 
     // Init
+    const [isLive, setIsLive] = useState(false);
     const [publicKey, setPublicKey] = useState<string | null>(null);
     const [privateKey, setPrivateKey] = useState<string | null>(null);
     const [version, setVersion] = useState<string | null>(null);
@@ -186,7 +181,7 @@ export default function Page() : JSX.Element {
 
     const handleToggleConnection = async () => {
         try {
-            if (isConnected) {
+            if (isLive) {
                 await window.electronAPI.disconnectSocket();
                 // Go to dashboard
                 setView("dashboard");
@@ -205,7 +200,7 @@ export default function Page() : JSX.Element {
                 }
                 
                 const response = await window.electronAPI.connectSocket();
-                console.log("Connect socket response", response);
+                setIsConnected(status === 'connected');
             }
         } catch (error) {
             console.error('Failed to toggle connection:', error);
@@ -249,23 +244,33 @@ export default function Page() : JSX.Element {
     // Services status
     const [servicesStatus, setServicesStatus] = useState<{service: string, isRunning: boolean}[]>([]);
     useEffect(() => {
-        // Initial fetch
-        window.electronAPI.getServicesHealth().then((status) => {
-            console.log("Services health", status);
-            setServicesStatus(status);
-        });
-
-        // Set up interval to fetch every 5 seconds
-        const interval = setInterval(() => {
-            window.electronAPI.getServicesHealth().then((status) => {
-                console.log("Services health", status);
+        const updateServicesStatus = async () => {
+            const status = await window.electronAPI.getServicesHealth();
+            // Only update state if the status has actually changed
+            if (!areServicesEqual(servicesStatus, status)) {
+                console.log("Services health updated", status);
                 setServicesStatus(status);
-            });
-        }, 5000);
+            }
+        };
+
+        // Helper function to compare services arrays
+        const areServicesEqual = (prev: typeof servicesStatus, next: typeof servicesStatus) => {
+            if (prev.length !== next.length) return false;
+            return prev.every((prevService, index) => 
+                prevService.service === next[index].service && 
+                prevService.isRunning === next[index].isRunning
+            );
+        };
+
+        // Initial fetch
+        updateServicesStatus();
+
+        // Set up interval
+        const interval = setInterval(updateServicesStatus, 5000);
 
         // Cleanup interval on component unmount
         return () => clearInterval(interval);
-    }, []);
+    }, [servicesStatus]); // Add servicesStatus as dependency
 
     // My node info
     const [myNodeInfo, setMyNodeInfo] = useState<IClient["info"] | null>(null);
@@ -297,6 +302,28 @@ export default function Page() : JSX.Element {
                         onSelect={(view) => {
                             setView(view)
                             setSelectedView(items.find(item => item.id === view) || defaultSelectedView)
+                        }}
+                        isLive={isLive}
+                        onToggleLive={() => {
+                            setIsConnecting(true);
+                            handleToggleConnection().then(() => {
+                                setIsConnecting(false);
+                                // Check if socket is connected
+                                //window.electronAPI.isConnected().then((isConnected) => {
+                                //    window.electronAPI.getServicesHealth().then((status) => {
+                                //        console.log("Services health", status);
+                                //        setServicesStatus(status);
+                                //        setIsConnected(isConnected);
+                                //        setIsLive(!isLive);
+                                //    });
+                                //});
+                                window.electronAPI.getServicesHealth().then((status) => {
+                                    console.log("Services health", status);
+                                    setServicesStatus(status);
+                                    //setIsConnected(isConnected);
+                                    setIsLive(!isLive);
+                                });
+                            });
                         }}
                         selectedView={view}
                         disabledItems={!isConnected ? ["browser"] : []}
@@ -456,39 +483,12 @@ export default function Page() : JSX.Element {
                                                 <Settings 
                                                     publicKey={publicKey}
                                                     privateKey={privateKey}
-                                                    mobileNodeKey={settings?.mobileNodeKey}
-                                                    openaiKey={settings?.openAIKey}
-                                                    anthropicKey={settings?.anthropicKey}
-                                                    numOfBrowser={settings?.numOfBrowser}
-                                                    apiKeyId={settings?.apiKeyId}
-                                                    apiKey={settings?.apiKey}
+                                                    settings={settings}
                                                     onKeysChange={(
-                                                        openaiKey: string,
-                                                        anthropicKey: string,
-                                                        mobileNodeKey: string,
-                                                        numOfBrowser: number,
-                                                        apiKeyId: string,
-                                                        apiKey: string
+                                                        newSettings
                                                     ) => {
-                                                        window.electronAPI.updateSettings({
-                                                            openAIKey: openaiKey,
-                                                            anthropicKey: anthropicKey,
-                                                            mobileNodeKey: mobileNodeKey,
-                                                            numOfBrowser: numOfBrowser,
-                                                            apiKeyId: apiKeyId,
-                                                            apiKey: apiKey
-                                                        }).then(() => {
-                                                            // //Close settings
-                                                            // setView("dashboard");
-                                                            // setSelectedView(items.find(item => item.id === "dashboard") || defaultSelectedView);
-                                                            //getUpdated settings
-                                                            window.electronAPI.getSettings().then((settings) => {
-                                                                console.log("Settings", settings);
-
-                                                                window.electronAPI.updateMobileNodeApiKey(settings.mobileNodeKey);
-                                                                window.electronAPI.updateApiKey(settings.apiKeyId, settings.apiKey);
-                                                                setSettings(settings);
-                                                            });
+                                                        window.electronAPI.updateSettings(newSettings).then((updatedSettings) => {
+                                                            setSettings(updatedSettings);
                                                         })
                                                     }}
                                                 />
@@ -508,7 +508,7 @@ export default function Page() : JSX.Element {
                                 }}
                             >
                                 <BottomBar 
-                                    isControllerRunning={servicesStatus.find(service => service.service === "browsers-service-poc")?.isRunning || false}
+                                    isControllerRunning={servicesStatus.find(service => service.service === "browsers-cmgr-ts")?.isRunning || false}
                                     isConnectedToServer={isConnected}
                                     isApiRunning={servicesStatus.find(service => service.service === "scraper-service-ts")?.isRunning || false}
                                     isMobileNodeRunning={false}//{isMobileConnected}

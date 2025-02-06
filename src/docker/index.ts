@@ -19,38 +19,45 @@ interface ExecResult {
 
 // Update the Docker check code:
 export const dockerPath = findDockerExecutable();
-function findDockerExecutable(): string | null {
-  const dockerPaths =
-    process.platform === "darwin"
-      ? [
-          '/usr/local/bin/docker',
-          '/opt/homebrew/bin/docker',
-          '/usr/bin/docker',
-          '/Applications/Docker.app/Contents/Resources/bin/docker',
-          '~/Library/Group Containers/group.com.docker/docker'
-        ]
-      : process.platform === "linux"
-      ? [
-        '/usr/bin/docker',
-        '/usr/local/bin/docker',
-        '/opt/bin/docker',
-        '/snap/bin/docker',
-        '/var/lib/snapd/snap/bin/docker',
-        '~/.docker/cli-plugins/docker'
-      ]
-      : [    
-          'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
-          'C:\\Program Files (x86)\\Docker\\Docker\\resources\\bin\\docker.exe',
-          '%ProgramFiles%\\Docker\\Docker\\resources\\bin\\docker.exe',
-          '%ProgramW6432%\\Docker\\Docker\\resources\\bin\\docker.exe'
-        ];
 
-  for (const dockerPath of dockerPaths) {
-    if (fs.existsSync(dockerPath)) {
-      return dockerPath;
+function findDockerExecutable(): string | null {
+    // First check if we have a manually set path
+    if (process.env.DOCKER_PATH && fs.existsSync(process.env.DOCKER_PATH)) {
+        return process.env.DOCKER_PATH;
     }
-  }
-  return null;
+    
+    const dockerPaths =
+        process.platform === "darwin"
+            ? [
+                '/usr/local/bin/docker',
+                '/opt/homebrew/bin/docker',
+                '/usr/bin/docker',
+                '/Applications/Docker.app/Contents/Resources/bin/docker',
+                '~/Library/Group Containers/group.com.docker/docker'
+                ]
+            : process.platform === "linux"
+            ? [
+                '/usr/bin/docker',
+                '/usr/local/bin/docker',
+                '/opt/bin/docker',
+                '/snap/bin/docker',
+                '/var/lib/snapd/snap/bin/docker',
+                '~/.docker/cli-plugins/docker'
+            ]
+            : [    
+                'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe',
+                'C:\\Program Files (x86)\\Docker\\Docker\\resources\\bin\\docker.exe',
+                '%ProgramFiles%\\Docker\\Docker\\resources\\bin\\docker.exe',
+                '%ProgramW6432%\\Docker\\Docker\\resources\\bin\\docker.exe'
+                ];
+
+    for (const dockerPath of dockerPaths) {
+        if (fs.existsSync(dockerPath)) {
+            setDockerPath(dockerPath);
+            return dockerPath;
+        }
+    }
+    return null;
 }
 
 async function streamMobileDockerImageLogs(): Promise<void> {
@@ -209,31 +216,39 @@ export async function killMobileDockerContainer(): Promise<void> {
   }
 }
 
-export async function isDockerInstalled(): Promise<boolean> {
-  try {
-    const { stdout: versionStdout, stderr: versionStderr }: ExecResult =
-      await execPromise(`${dockerPath || "docker"} --version`);
-
-    if (versionStderr) {
-      logToFile(`Warning checking Docker version: ${versionStderr}`);
+export async function checkDocker(): Promise<boolean> {
+    // First check if Docker exists
+    if (!dockerPath) {
+        return false;
     }
 
-    const { stdout: psStdout, stderr: psStderr }: ExecResult =
-      await execPromise(`${dockerPath || "docker"} ps`);
+    // Then check if Docker daemon is running
+    return new Promise((resolve) => {
+        exec(`"${dockerPath}" info`, (error) => {
+            resolve(!error);
+        });
+    });
+}
 
-    if (psStderr) {
-      logToFile(`Warning checking Docker status: ${psStderr}`);
+export async function setDockerPath(path: string): Promise<boolean> {
+    if (!fs.existsSync(path)) {
+        logToFile(`Docker executable not found at path: ${path}`);
+        return false;
     }
 
-    logToFile("Docker is installed and running");
-    return true;
-  } catch (error) {
-    logToFile(
-      `Docker is not installed or not running: ${(error as Error).message}`
-    );
-    logToFile(
-      "Please ensure Docker Desktop is installed and running and try again"
-    );
-    return false;
-  }
+    try {
+        // Test if the provided path is valid by running docker --version
+        const { stderr }: ExecResult = await execPromise(`"${path}" --version`);
+        if (stderr) {
+            logToFile(`Warning testing Docker path: ${stderr}`);
+        }
+        
+        // If we get here, the path is valid
+        process.env.DOCKER_PATH = path;
+        logToFile(`Docker path set successfully to: ${path}`);
+        return true;
+    } catch (error) {
+        logToFile(`Invalid Docker path: ${(error as Error).message}`);
+        return false;
+    }
 }

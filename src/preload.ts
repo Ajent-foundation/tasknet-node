@@ -16,7 +16,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     storeClientInfo: (clientInfo: StoreData) => ipcRenderer.invoke('store-client-info', clientInfo),
     isConnected: () => ipcRenderer.invoke('is-connected'),
     readServiceLogs: (serviceName: string, logType: 'out' | 'err') => ipcRenderer.invoke('read-service-logs', serviceName, logType),
-    getServicesStatus: () => ipcRenderer.invoke('get-services-status'),
     getServicesHealth: () => ipcRenderer.invoke('get-services-health'),
     checkDocker: () => ipcRenderer.invoke('check-docker'),
     init: () => ipcRenderer.invoke('init'),
@@ -25,7 +24,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPoints: () => ipcRenderer.invoke('get-points'),
     startMobileNode: () => ipcRenderer.invoke('start-mobile-node'),
     killMobileNode: () => ipcRenderer.invoke('kill-mobile-node'),
-    isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected'),
-    updateMobileNodeApiKey: (apiKey: string) => ipcRenderer.invoke('update-mobile-node-api-key', apiKey),
-    updateApiKey: (apiKeyId: string, apiKey: string) => ipcRenderer.invoke('update-api-key', apiKeyId, apiKey),
+    isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected')
 });

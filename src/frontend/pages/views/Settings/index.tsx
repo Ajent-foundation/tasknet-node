@@ -1,41 +1,30 @@
-import { Box, Button, Paper, Typography, TextField, Tooltip, IconButton, Slider } from "@mui/material";
+import { Box, Paper, Typography, Tooltip, IconButton, Alert } from "@mui/material";
 import { useState } from "react";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { Settings } from "../../../../store";
 
 export interface IProps {
     publicKey: string;
     privateKey: string;
-    openaiKey: string;
-    anthropicKey: string;
-    mobileNodeKey: string;
-    apiKeyId: string;
-    apiKey: string;
-    numOfBrowser: number
-    onKeysChange: (openaiKey: string, anthropicKey: string, mobileNodeKey: string, numOfBrowser:number, apiKeyId: string, apiKey: string) => void;
+    onKeysChange: (newSettings: Settings) => void;
+    settings: Settings;
 }
 
+// Components
+import Section from "./Section";
 
-export default function View({ publicKey, privateKey, openaiKey, anthropicKey, mobileNodeKey, apiKeyId, apiKey, onKeysChange, numOfBrowser }: IProps) : JSX.Element {
+export default function View({ publicKey, privateKey, settings, onKeysChange }: IProps) : JSX.Element {
     const [copiedPublicKey, setCopiedPublicKey] = useState(false);
     const [copiedPrivateKey, setCopiedPrivateKey] = useState(false);
-    const [copiedOpenAI, setCopiedOpenAI] = useState(false);
-    const [copiedAnthropic, setCopiedAnthropic] = useState(false);
     const [showPrivateKey, setShowPrivateKey] = useState(false);
-    const [copiedMobileNode, setCopiedMobileNode] = useState(false);
-    const [copiedApiKey, setCopiedApiKey] = useState(false);
-    const [copiedApiKeyId, setCopiedApiKeyId] = useState(false);
-    const [openaiInputKey, setOpenaiInputKey] = useState(openaiKey);
-    const [anthropicInputKey, setAnthropicInputKey] = useState(anthropicKey);
-    const [mobileNodeInputKey, setMobileNodeInputKey] = useState(mobileNodeKey);
-    const [apiKeyIdInputKey, setApiKeyIdInputKey] = useState(apiKeyId);
-    const [apiKeyInputKey, setApiKeyInputKey] = useState(apiKey);
-    const [showOpenAIKey, setShowOpenAIKey] = useState(false);
-    const [showAnthropicKey, setShowAnthropicKey] = useState(false);
-    const [showMobileNodeKey, setShowMobileNodeKey] = useState(false);
-    const [showApiKey, setShowApiKey] = useState(false);
-    const [showApiKeyId, setShowApiKeyId] = useState(false);
-    const [browserCount, setBrowserCount] = useState(numOfBrowser);
+    const handleCopy = (field: 'public' | 'private', value: string) => {
+        navigator.clipboard.writeText(value).then(() => {
+            setCopiedPublicKey(true);
+            setTimeout(() => setCopiedPublicKey(false), 2000);
+        });
+    }
+
     const paperSx = {
         borderRadius: "4px",
         border: "1px solid #E4E4E7",
@@ -59,26 +48,6 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
         color: "#52525A",
     }
 
-    const inputSx = {
-        '& .MuiOutlinedInput-root': {
-            '& fieldset': {
-                borderColor: '#E4E4E7',
-            },
-            '&:hover fieldset': {
-                borderColor: '#E4E4E7',
-            },
-            '&.Mui-focused fieldset': {
-                borderColor: '#2563EB',
-            },
-            '& input': {
-                color: '#1A1A1E',
-                fontSize: '16px',
-                lineHeight: '24px',
-                padding: '10px 14px',
-            }
-        }
-    }
-
     const valueSx = {
         fontSize: '16px',
         lineHeight: '24px',
@@ -90,54 +59,22 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
         width: '100%'
     }
 
-    const handleCopy = (field: 'public' | 'private' | 'openai' | 'anthropic' | 'mobileNode' | 'apiKey' | 'apiKeyId', value: string) => {
-        navigator.clipboard.writeText(value).then(() => {
-            switch (field) {
-                case 'public':
-                    setCopiedPublicKey(true);
-                    setTimeout(() => setCopiedPublicKey(false), 2000);
-                    break;
-                case 'private':
-                    setCopiedPrivateKey(true);
-                    setTimeout(() => setCopiedPrivateKey(false), 2000);
-                    break;
-                case 'openai':
-                    setCopiedOpenAI(true);
-                    setTimeout(() => setCopiedOpenAI(false), 2000);
-                    break;
-                case 'anthropic':
-                    setCopiedAnthropic(true);
-                    setTimeout(() => setCopiedAnthropic(false), 2000);
-                    break;
-                case 'mobileNode':
-                    setCopiedMobileNode(true);
-                    setTimeout(() => setCopiedMobileNode(false), 2000);
-                    break;
-                case 'apiKey':
-                    setCopiedApiKey(true);
-                    setTimeout(() => setCopiedApiKey(false), 2000);
-                    break;
-                case 'apiKeyId':
-                    setCopiedApiKeyId(true);
-                    setTimeout(() => setCopiedApiKeyId(false), 2000);
-                    break;
-            }
-        });
-    };
-
-    const hasChanges = openaiInputKey !== openaiKey || 
-                      anthropicInputKey !== anthropicKey || 
-                      mobileNodeInputKey !== mobileNodeKey ||
-                      apiKeyIdInputKey !== apiKeyId ||
-                      apiKeyInputKey !== apiKey ||
-                      browserCount !== numOfBrowser;
-
     return (
         <Box
             display="flex"
             flexDirection="column"
             gap="16px"
+            sx={{
+                flexGrow: 1,
+                paddingRight: '16px',
+                overflow: 'auto',
+                height: '700px'
+            }}
         >
+            <Alert severity="info" sx={{ mb: 1 }}>
+                Some settings changes will only take effect after toggling Go live again
+            </Alert>
+            
             <Paper sx={{...paperSx, height: "fit-content", padding: "24px"}}>
                 <Box
                     display="flex"
@@ -268,352 +205,235 @@ export default function View({ publicKey, privateKey, openaiKey, anthropicKey, m
                 </Box>
             </Paper>
 
-            <Paper sx={{...paperSx, height: "fit-content", padding: "24px"}}>
-                <Box
-                    display="flex"
-                    flexDirection={"column"}
-                    gap={"24px"}
-                >
-                    <Box
-                        display="flex"
-                        flexDirection={"row"}
-                        gap={"8px"}
-                        alignItems="center"
-                    >
-                        <Typography sx={titleSx}>
-                            API Keys
-                        </Typography>
-                    </Box>
-
-                    <Box
-                        display="flex"
-                        flexDirection={"column"}
-                        gap={"8px"}
-                    >
-                        <Box display="flex" flexDirection="column" gap="6px">
-                            <Typography sx={labelSx}>OpenAI API Key</Typography>
-                            <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <TextField 
-                                    type={showOpenAIKey ? "text" : "password"}
-                                    placeholder="Enter your OpenAI API key"
-                                    value={openaiInputKey}
-                                    onChange={(e) => setOpenaiInputKey(e.target.value)}
-                                    sx={inputSx}
-                                    fullWidth
-                                    variant="outlined"
-                                    slotProps={{
-                                        input: {
-                                            endAdornment: (
-                                                <IconButton
-                                                    onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                                                    edge="end"
-                                                >
-                                                    {showAnthropicKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                </IconButton>
-                                            ),
-                                        }
-                                    }}
-                                />
-                                <Tooltip 
-                                    open={copiedOpenAI}
-                                    title="Copied!"
-                                    placement="top"
-                                    arrow
-                                    onClose={() => setCopiedOpenAI(false)}
-                                >
-                                    <Box
-                                        width="40px"
-                                        height="40px"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        sx={{ 
-                                            cursor: 'pointer',
-                                            border: '1px solid #E4E4E7',
-                                            borderRadius: '4px',
-                                            transition: 'all 0.2s ease-in-out',
-                                            '&:hover': {
-                                                backgroundColor: '#F4F4F5'
-                                            }
-                                        }}
-                                        onClick={() => handleCopy('openai', openaiKey)}
-                                    >
-                                        {copiedOpenAI ? (
-                                            <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
-                                        ) : (
-                                            <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
-                                        )}
-                                    </Box>
-                                </Tooltip>
-                            </Box>
-                        </Box>
-                        <Box display="flex" flexDirection="column" gap="6px">
-                            <Typography sx={labelSx}>Anthropic API Key</Typography>
-                            <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <TextField 
-                                    type={showAnthropicKey ? "text" : "password"}
-                                    placeholder="Enter your Anthropic API key"
-                                    value={anthropicInputKey}
-                                    onChange={(e) => setAnthropicInputKey(e.target.value)}
-                                    sx={inputSx}
-                                    fullWidth
-                                    variant="outlined"
-                                    slotProps={{
-                                        input: {
-                                            endAdornment: (
-                                                <IconButton
-                                                    onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                                                    edge="end"
-                                                >
-                                                    {showAnthropicKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                </IconButton>
-                                            ),
-                                        }
-                                    }}
-                                />
-                                <Tooltip 
-                                    open={copiedAnthropic}
-                                    title="Copied!"
-                                    placement="top"
-                                    arrow
-                                    onClose={() => setCopiedAnthropic(false)}
-                                >
-                                    <Box
-                                        width="40px"
-                                        height="40px"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        sx={{ 
-                                            cursor: 'pointer',
-                                            border: '1px solid #E4E4E7',
-                                            borderRadius: '4px',
-                                            transition: 'all 0.2s ease-in-out',
-                                            '&:hover': {
-                                                backgroundColor: '#F4F4F5'
-                                            }
-                                        }}
-                                        onClick={() => handleCopy('anthropic', anthropicKey)}
-                                    >
-                                        {copiedAnthropic ? (
-                                            <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
-                                        ) : (
-                                            <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
-                                        )}
-                                    </Box>
-                                </Tooltip>
-                            </Box>
-                        </Box>
-                        {/*
-                        <Box display="flex" flexDirection="column" gap="6px">
-                            <Typography sx={labelSx}>Node API Key</Typography>
-                            <Box sx={{ display: 'flex', gap: '8px' }}>
-                                <TextField 
-                                    type={showMobileNodeKey ? "text" : "password"}
-                                    placeholder="Enter your MoNode API key"
-                                    value={mobileNodeInputKey}
-                                    onChange={(e) => setMobileNodeInputKey(e.target.value)}
-                                    sx={inputSx}
-                                    fullWidth
-                                    variant="outlined"
-                                    slotProps={{
-                                        input: {
-                                            endAdornment: (
-                                                <IconButton
-                                                    onClick={() => setShowAnthropicKey(!showAnthropicKey)}
-                                                    edge="end"
-                                                >
-                                                    {showAnthropicKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                </IconButton>
-                                            ),
-                                        }
-                                    }}
-                                />
-                                <Tooltip 
-                                    open={copiedMobileNode}
-                                    title="Copied!"
-                                    placement="top"
-                                    arrow
-                                    onClose={() => setCopiedMobileNode(false)}
-                                >
-                                    <Box
-                                        width="40px"
-                                        height="40px"
-                                        display="flex"
-                                        alignItems="center"
-                                        justifyContent="center"
-                                        sx={{ 
-                                            cursor: 'pointer',
-                                            border: '1px solid #E4E4E7',
-                                            borderRadius: '4px',
-                                            transition: 'all 0.2s ease-in-out',
-                                            '&:hover': {
-                                                backgroundColor: '#F4F4F5'
-                                            }
-                                        }}
-                                        onClick={() => handleCopy('mobileNode', mobileNodeKey)}
-                                    >
-                                        {copiedMobileNode ? (
-                                            <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
-                                        ) : (
-                                            <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
-                                        )}
-                                    </Box>
-                                </Tooltip>
-                            </Box>
-                        </Box>*/}
-                        <Box display="flex" flexDirection="row" gap="8px">
-                            <Box display="flex" flexDirection="column" gap="6px" width={"35%"}>
-                                <Typography sx={labelSx}>API Key ID</Typography>
-                                <Box sx={{ display: 'flex', gap: '8px' }}>
-                                    <TextField 
-                                        type={showApiKeyId ? "text" : "password"}
-                                        placeholder="Enter your API Key ID"
-                                        value={apiKeyIdInputKey}
-                                        onChange={(e) => setApiKeyIdInputKey(e.target.value)}
-                                        sx={inputSx}
-                                        fullWidth
-                                        variant="outlined"
-                                        slotProps={{
-                                            input: {
-                                                endAdornment: (
-                                                    <IconButton
-                                                        onClick={() => setShowApiKeyId(!showApiKeyId)}
-                                                        edge="end"
-                                                    >
-                                                        {showApiKeyId ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                    </IconButton>
-                                                ),
-                                            }
-                                        }}
-                                    />
-                                    <Tooltip 
-                                        open={copiedApiKeyId}
-                                        title="Copied!"
-                                        placement="top"
-                                        arrow
-                                        onClose={() => setCopiedApiKeyId(false)}
-                                    >
-                                        <Box
-                                            width="40px"
-                                            height="40px"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                            sx={{ 
-                                                cursor: 'pointer',
-                                                border: '1px solid #E4E4E7',
-                                                borderRadius: '4px',
-                                                transition: 'all 0.2s ease-in-out',
-                                                '&:hover': {
-                                                    backgroundColor: '#F4F4F5'
-                                                }
-                                            }}
-                                            onClick={() => handleCopy('apiKeyId', apiKeyId)}
-                                        >
-                                            {copiedApiKeyId ? (
-                                                <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
-                                            ) : (
-                                                <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
-                                            )}
-                                        </Box>
-                                    </Tooltip>
-                                </Box>
-                            </Box>
-                            <Box display="flex" flexDirection="column" gap="6px" flexGrow={1}>
-                                <Typography sx={labelSx}>Node API Key</Typography>
-                                <Box sx={{ display: 'flex', gap: '8px' }}>
-                                    <TextField 
-                                        type={showApiKey ? "text" : "password"}
-                                        placeholder="Enter your API Key"
-                                        value={apiKeyInputKey}
-                                        onChange={(e) => setApiKeyInputKey(e.target.value)}
-                                        sx={inputSx}
-                                        fullWidth
-                                        variant="outlined"
-                                        slotProps={{
-                                            input: {
-                                                endAdornment: (
-                                                    <IconButton
-                                                        onClick={() => setShowApiKey(!showApiKey)}
-                                                        edge="end"
-                                                    >
-                                                        {showApiKey ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                                                    </IconButton>
-                                                ),
-                                            }
-                                        }}
-                                    />
-                                    <Tooltip 
-                                        open={copiedApiKey}
-                                        title="Copied!"
-                                        placement="top"
-                                        arrow
-                                        onClose={() => setCopiedApiKey(false)}
-                                    >
-                                        <Box
-                                            width="40px"
-                                            height="40px"
-                                            display="flex"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                            sx={{ 
-                                                cursor: 'pointer',
-                                                border: '1px solid #E4E4E7',
-                                                borderRadius: '4px',
-                                                transition: 'all 0.2s ease-in-out',
-                                                '&:hover': {
-                                                    backgroundColor: '#F4F4F5'
-                                                }
-                                            }}
-                                            onClick={() => handleCopy('apiKey', apiKey)}
-                                        >
-                                            {copiedApiKey ? (
-                                                <img src={"static://assets/success.svg"} alt="copied" width={"20px"} height={"20px"}/>
-                                            ) : (
-                                                <img src={"static://assets/copy.svg"} alt="copy" width={"20px"} height={"20px"}/>
-                                            )}
-                                        </Box>
-                                    </Tooltip>
-                                </Box>
-                            </Box>
-                        </Box>
-                        <Box display="flex" flexDirection="column" gap="6px" mt="16px">
-                            <Typography sx={labelSx}>Number of Browsers: {browserCount}</Typography>
-                            <Box sx={{ px: 1 }}>
-                                <Slider
-                                    value={browserCount}
-                                    onChange={(_, value) => setBrowserCount(value as number)}
-                                    min={1}
-                                    max={20}
-                                    marks
-                                    valueLabelDisplay="auto"
-                                    aria-label="Number of browsers"
-                                />
-                            </Box>
-                        </Box>
-                    </Box>
-
-                    <Box
-                        display="flex"
-                        justifyContent="flex-end"
-                    >
-                        <Box
-                            width="200px"
-                        >
-                            <Button 
-                                variant="contained" 
-                                color="primary" 
-                                disabled={!hasChanges}
-                                sx={{width:"100%"}}
-                                onClick={() => onKeysChange(openaiInputKey, anthropicInputKey, mobileNodeInputKey, browserCount, apiKeyIdInputKey, apiKeyInputKey)}
-                            >
-                                Save
-                            </Button>
-                        </Box>
-                    </Box>
-                </Box>
-            </Paper>
+            <Section 
+                title="Node" 
+                fields={[
+                    [
+                        {
+                            id: "nodeProtocol",
+                            label: "Protocol",
+                            value: settings.nodeProtocol,
+                            type: "select",
+                            options: [
+                                { label: "http", value: "http" },
+                                { label: "https", value: "https" }
+                            ]
+                        },
+                        {
+                            id: "wsProtocol",
+                            label: "Websocket Protocol",
+                            value: settings.wsProtocol,
+                            type: "select",
+                            options: [
+                                { label: "ws", value: "ws" },
+                                { label: "wss", value: "wss" }
+                            ]
+                        },
+                        {
+                            id: "serverIpOrDomain",
+                            label: "IP (domain or ip only)",
+                            value: settings.serverIpOrDomain,
+                            type: "text",
+                            hint: "The URL where your node server is running (e.g., localhost)"
+                        },
+                        {
+                            id: "serverPort",
+                            label: "Port",
+                            value: settings.serverPort,
+                            type: "text",
+                            hint: "The port where your node server is running (e.g., 3000)"
+                        },
+                        {
+                            id: "dontConnectOnGoLive",
+                            label: "Don't connect to server on Go live",
+                            value: settings.dontConnectOnGoLive.toString(),
+                            type: "toggle"
+                        },
+                    ],
+                    [
+                        {
+                            id: "apiKey",
+                            label: "Node API Key",
+                            value: settings.apiKey,
+                            type: "password"
+                        },
+                        {
+                            id: "apiKeyId",
+                            label: "Node API Key ID",
+                            value: settings.apiKeyId,
+                            type: "password"
+                        }
+                    ],
+                ]}
+                onSavedFields={(fields: Record<string, string>) => {
+                    onKeysChange({
+                        ...settings,
+                        ...fields
+                    });
+                }}
+                showSaveButton={true}
+            />
+            <Section 
+                title="Browser Container Manager"
+                fields={[
+                    [
+                        {
+                            id: "browserManagerProtocol",
+                            label: "Protocol",
+                            value: settings.browserManagerProtocol,
+                            type: "select",
+                            options: [
+                                { label: "http", value: "http" },
+                                { label: "https", value: "https" }
+                            ]
+                        },
+                        {
+                            id: "browserManagerIpOrDomain",
+                            label: "IP (domain or ip only)",
+                            value: settings.browserManagerIpOrDomain,
+                            type: "text",
+                            hint: "IP address of the container manager (will only apply if not started on Go live is toggled)"
+                        },
+                        {
+                            id: "browserManagerPort",
+                            label: "Port",
+                            value: settings.browserManagerPort,
+                            type: "text",
+                            hint: "Must be a number between 1-65535"
+                        },
+                        {
+                            id: "dontStartBrowserManagerOnGoLive",
+                            label: "Don't start on Go live",
+                            value: settings.dontStartBrowserManagerOnGoLive.toString(),
+                            type: "toggle"
+                        },
+                    ],
+                    [{
+                        id: "numOfBrowser",
+                        label: "Number of Browsers",
+                        value: settings.numOfBrowser.toString(),
+                        type: "slider",
+                        min: 1,
+                        max: 20
+                    }],
+                    [
+                        {
+                            id: "expressPort",
+                            label: "Express PORT Number",
+                            value: settings.expressPort,
+                            type: "text",
+                            hint: "Must be a number between 1-65535"
+                        },
+                        {
+                            id: "vncPort",
+                            label: "VNC PORT Number",
+                            value: settings.vncPort,
+                            type: "text",
+                            hint: "Must be a number between 1-65535"
+                        },
+                        {
+                            id: "cdpPort",
+                            label: "CDP PORT Number",
+                            value: settings.cdpPort,
+                            type: "text",
+                            hint: "Must be a number between 1-65535"
+                        }
+                    ],
+                    [{
+                        id: "screenResolution",
+                        label: "Default Screen Resolution",
+                        value: settings.screenResolution,
+                        type: "select",
+                        options: [
+                            { label: "1920x1080", value: "1920x1080" },
+                            { label: "1280x720", value: "1280x720" },
+                            { label: "1366x768", value: "1366x768" },
+                            { label: "1280x2400", value: "1280x2400" }
+                        ]
+                    }],
+                    [{
+                        id: "browserImageName",
+                        label: "Browser Image Name",
+                        value: settings.browserImageName,
+                        type: "text",
+                        hint: "Docker image name for the browser container"
+                    }],
+                    [{
+                        id: "dockerResources",
+                        label: "Docker Resources Configuration",
+                        value: "",
+                        type: "map",
+                        hint: "Invalid values will be ignored and defaults will be used",
+                        mapFields: {
+                            "memory": settings.dockerResources.memory,
+                            "cpu": settings.dockerResources.cpu,
+                        }
+                    }]
+                ]}
+                onSavedFields={(fields: Record<string, string>) => {
+                    onKeysChange({
+                        ...settings,
+                        ...fields
+                    });
+                }}
+                showSaveButton={true}
+            />
+            <Section 
+                title="Scraper Service"
+                fields={[
+                    [
+                        {
+                            id: "scraperServiceProtocol",
+                            label: "Protocol",
+                            value: settings.scraperServiceProtocol,
+                            type: "select",
+                            options: [
+                                { label: "http", value: "http" },
+                                { label: "https", value: "https" }
+                            ]
+                        },
+                        {
+                            id: "scraperServiceIpOrDomain",
+                            label: "IP (domain or ip only)",
+                            value: settings.scraperServiceIpOrDomain,
+                            type: "text",
+                            hint: "IP address of the scraper service (will only apply if not started on Go live is toggled)"
+                        },
+                        {
+                            id: "scraperServicePort",
+                            label: "Port",
+                            value: settings.scraperServicePort,
+                            type: "text",
+                            hint: "Must be a number between 1-65535"
+                        },
+                        {
+                            id: "dontStartScraperOnGoLive",
+                            label: "Don't start on Go live",
+                            value: settings.dontStartScraperOnGoLive.toString(),
+                            type: "toggle"
+                        },
+                    ],
+                    [{
+                        id: "openAIKey",
+                        label: "OpenAI Key",
+                        value: settings.openAIKey,
+                        type: "password"
+                    }],
+                    [{
+                        id: "anthropicKey",
+                        label: "Anthropic Key",
+                        value: settings.anthropicKey,
+                        type: "password"
+                    }]
+                ]}
+                onSavedFields={(fields: Record<string, string>) => {
+                    onKeysChange({
+                        ...settings,
+                        ...fields
+                    });
+                }}
+                showSaveButton={true}
+            />
         </Box>
     )
 }

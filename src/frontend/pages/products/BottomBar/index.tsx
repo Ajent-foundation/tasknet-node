@@ -70,7 +70,7 @@ export default function BottomBar({
                                 height="14px"
                             >
                                 {
-                                    isApiRunning ? 
+                                    isConnectedToServer ? 
                                         <img src={"static://assets/greenDot.svg"} alt="Running" /> 
                                         : 
                                         <img src={"static://assets/redDot.svg"} alt="Stopped" />

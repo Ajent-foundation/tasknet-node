@@ -21,7 +21,9 @@ export interface ProductProps {
     error?: string;
     warning?: string;
     myPoints: string;
-}   
+    isLive: boolean;
+    onToggleLive: () => void;
+}
 
 
 export default function Product({ 
@@ -41,7 +43,9 @@ export default function Product({
     warning,
     myPoints,
     isAppleConnected,
-    isAppleConnecting
+    isAppleConnecting,
+    isLive,
+    onToggleLive
 }: ProductProps) : JSX.Element {
     const [copied, setCopied] = useState(false);
     
@@ -329,12 +333,10 @@ export default function Product({
                                     gap="8px"
                                 >
                                     <Switch 
-                                        checked={isAppleConnected}
-                                        disabled={isAppleConnecting}
-                                        onClick={onToggleApple}
-                                        color={
-                                            "default"
-                                        }
+                                        checked={isLive}
+                                        onClick={onToggleLive}
+                                        disabled={isConnecting}
+                                        color="default"
                                     />
                                     <Box
                                         display="flex"
@@ -342,13 +344,13 @@ export default function Product({
                                         gap="8px"
                                     >
                                         {
-                                            isAppleConnected && !isAppleConnecting ? 
-                                                    <img src={"static://assets/greenDot.svg"} alt="connected"/> 
+                                            isLive ? 
+                                                <img src={"static://assets/greenDot.svg"} alt="connected"/> 
                                                 :
                                                 <img src={"static://assets/redDot.svg"} alt="disconnected"/>
                                         }
-                                        <Typography sx={{...toggleTextSx, color: isAppleConnected && !isAppleConnecting ? "#0E9384" : "#D92D20"}}>
-                                            {isAppleConnected && !isAppleConnecting ? "Live" : "Go live"}
+                                        <Typography sx={{...toggleTextSx, color: isLive ? "#0E9384" : "#D92D20"}}>
+                                            {isLive ? "Live" : "GoLive"}
                                         </Typography>
                                     </Box>
                                 </Box>

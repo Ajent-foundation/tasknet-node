@@ -3,19 +3,30 @@ import { GlobalState } from './backend/types';
 import { createWindow, createTray } from './backend/app';
 import path from 'path';
 import { 
-    deleteStoredClient, getNodesInfo, getPoints, getStoredClient, 
-    getSystemInfo, readServiceLogs, storeClientInfo 
+    deleteStoredClient, getStoredClient, 
+    getSystemInfo, storeClientInfo 
 } from './backend/handlers/store';
 import { 
-    connectSocket, disconnectSocket, isSocketConnected, 
+    readServiceLogs
+} from './backend/handlers/logs';
+import { 
+    getNodesInfo, getPoints
+} from './backend/handlers/api';
+import { 
+    connectSocket, disconnectSocket, isSocketConnected
+} from './backend/handlers/socket';
+import { 
     stopServices, getServicesStatus, 
     forceKillAtPort,
-    startMobileNode, killMobileNode, isMobileConnected, updateMobileNodeApiKey, updateApiKey
-} from './backend/handlers/socket';
-import { init, checkDocker } from './backend/handlers/init';
-import { stopPOC as gracefulShutdownPOC} from './services/browser-cmgr';
+    startMobileNode, killMobileNode, isMobileConnected
+} from './services';
+
+
+import { init } from './backend/handlers/init';
+import { checkDocker } from './docker';
+import { stopBrowserManager as gracefulShutdownPOC} from './services/browser-cmgr';
 import { stopScraper as gracefulShutdownScraper} from './services/scraper-service';
-import { getSettings, updateSettings } from './backend/handlers/settings/getSettings';
+import { getSettings, updateSettings } from './backend/handlers/settings';
 import fs from 'fs';
 import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
 updateElectronApp({
@@ -31,20 +42,6 @@ export const globalState: GlobalState = {
     mainWindow: null,
     socket: null,
     tray: null,
-    servicesState: {
-        'scraper-service-ts': { 
-            pid: null,
-            isRunning: false 
-        },
-        'browsers-service-poc': { 
-            pid: null,
-            isRunning: false 
-        },
-        'mobile-service': { 
-            pid: null,
-            isRunning: false 
-        }
-    }
 };
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -133,6 +130,7 @@ const cleanup = (exitCode: number, reason?: string) => {
 
 // Log unhandled promise rejections
 process.on('unhandledRejection', (error) => {
+    console.error('Unhandled Rejection:', error);
     fs.appendFileSync(logFile, `\n[${new Date().toISOString()}] Unhandled Rejection:\n${error}\n`);
 });
 
@@ -145,9 +143,9 @@ app.on('render-process-gone', (event, webContents, details) => {
 process.on('SIGINT', () => cleanup(0, 'Received interrupt signal'));
 process.on('SIGTERM', () => cleanup(0, 'Received termination signal'));
 process.on('uncaughtException', (error) => {
-fs.appendFileSync(logFile, `\n[${new Date().toISOString()}] Uncaught Exception:\n${error.stack}\n`);
-  console.error('Uncaught Exception:', error);
-  cleanup(1);
+    fs.appendFileSync(logFile, `\n[${new Date().toISOString()}] Uncaught Exception:\n${error.stack}\n`);
+    console.error('Uncaught Exception:', error);
+    cleanup(1);
 });
 
 // IPC HANDLERS
@@ -157,7 +155,6 @@ ipcMain.handle('store-client-info', storeClientInfo);
 ipcMain.handle('get-system-info', getSystemInfo);
 ipcMain.handle('read-service-logs', readServiceLogs);
 ipcMain.handle('delete-stored-client', deleteStoredClient);
-ipcMain.handle('get-services-status', ()=> globalState.servicesState);   
 ipcMain.handle('connect-socket', () => connectSocket(globalState.mainWindow));
 ipcMain.handle('is-connected', isSocketConnected);
 ipcMain.handle('disconnect-socket', disconnectSocket);
@@ -168,7 +165,5 @@ ipcMain.handle('get-settings', getSettings);
 ipcMain.handle('update-settings', updateSettings);
 ipcMain.handle('get-points', getPoints);
 ipcMain.handle('start-mobile-node', startMobileNode);
-ipcMain.handle('update-mobile-node-api-key', (event, apiKey: string) => updateMobileNodeApiKey(apiKey));
 ipcMain.handle('kill-mobile-node', killMobileNode);
 ipcMain.handle('is-mobile-connected', isMobileConnected);
-ipcMain.handle('update-api-key', (event, apiKeyId: string, apiKey: string) => updateApiKey(apiKeyId, apiKey));

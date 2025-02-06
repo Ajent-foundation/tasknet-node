@@ -6,12 +6,6 @@ export interface ServiceConfig {
   isRunning: boolean;
 }
 
-export interface ServicesState {
-  'scraper-service-ts': ServiceConfig;
-  'browsers-service-poc': ServiceConfig;
-  'mobile-service': ServiceConfig;
-}
-
 export interface ServicesConfig {
   publicKey: string;
   privateKey: string;
@@ -25,7 +19,6 @@ export interface GlobalState {
   mainWindow: BrowserWindow | null;
   socket: Socket | null;
   tray: Tray | null;
-  servicesState: ServicesState;
 }
 
 declare global {

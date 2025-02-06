@@ -13,12 +13,38 @@ export interface StoreData {
 }
 
 export interface Settings {
-    openAIKey:string,
-    anthropicKey:string,
-    mobileNodeKey:string
-    numOfBrowser: number
-    apiKeyId: string,
-    apiKey: string
+    // Node settings
+    nodeProtocol: string;
+    wsProtocol: string;
+    serverIpOrDomain: string;
+    serverPort: string;
+    dontConnectOnGoLive: boolean;
+    apiKeyId: string;
+    apiKey: string;
+
+    // Browser Container Manager settings
+    browserManagerProtocol: string;
+    browserManagerIpOrDomain: string;
+    browserManagerPort: string;
+    dontStartBrowserManagerOnGoLive: boolean;
+    numOfBrowser: number;
+    expressPort: string;
+    vncPort: string;
+    cdpPort: string;
+    screenResolution: string;
+    browserImageName: string;
+    dockerResources: {
+        memory: string;
+        cpu: string;
+    };
+
+    // Scraper Service settings
+    scraperServiceProtocol: string;
+    scraperServiceIpOrDomain: string;
+    scraperServicePort: string;
+    dontStartScraperOnGoLive: boolean;
+    openAIKey: string;
+    anthropicKey: string;
 }
 
 export const store = new Store();
