@@ -17,7 +17,6 @@ import ForgeExternalsPlugin from '@timfish/forge-externals-plugin';
 import { mainConfig } from './webpack.main.config';
 import { rendererConfig } from './webpack.renderer.config';
 import path from 'path';
-import { arch } from 'os';
 
 // Load environment variables
 import 'dotenv/config';
@@ -30,8 +29,6 @@ const config: ForgeConfig = {
         name: "Tasknet Node",
         buildVersion: "1.0.0",
         extraResource: (() => {
-            const platform = process.platform;
-            const architecture = arch();
             const resources: string[] = [
                 path.resolve(__dirname, "images", "icon.png"),
                 path.resolve(__dirname, "images", "iconFilled.png"),
@@ -40,11 +37,6 @@ const config: ForgeConfig = {
                 path.resolve(__dirname, "src/services/scraper-service-ts/src/Extract/Prompts/"),
             ];
 
-            // Add Docker image based on architecture
-            resources.push(path.resolve(__dirname, 
-                architecture === 'arm64' ? 'assets/node-image-arm64.tar' : 'assets/node-image-amd64.tar'
-            ));
-
             return resources;
         })(),
         icon: './images/icon',
@@ -52,13 +44,13 @@ const config: ForgeConfig = {
             identity: process.env.IDENTITY,
         },
         //osxNotarize configuration
+    },
+    plugins: [
         // osxNotarize: {
         //     appleId: process.env.APPLE_ID || '',
         //     teamId: process.env.APPLE_TEAM_ID || '',
         //     appleIdPassword: process.env.APPLE_ID_PASSWORD || ''
         // }
-    },
-    plugins: [
         new WebpackPlugin({
             mainConfig,
             renderer: {
@@ -113,6 +105,7 @@ const config: ForgeConfig = {
         new MakerDmg({
             appPath: './out/Tasknet Node-darwin-arm64/Tasknet Node.app',
             background: './images/dmg-background.png',
+            icon: './images/icon.icns',
             format: 'UDZO',
             contents: [
                 {

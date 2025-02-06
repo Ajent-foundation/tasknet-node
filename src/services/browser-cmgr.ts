@@ -9,12 +9,12 @@ const BASE_LOGS_PATH = app.isPackaged
 
 const POC_LOG_FILE = path.join(BASE_LOGS_PATH, "browsers-service-poc-out.log")
 
-export async function startPOC(numOfBrowser: number){
+export async function startPOC(numOfBrowser: number, additionalDockerArgs: Record<string, string>){
 
     try{
         console.log("Starting POC with", numOfBrowser, "browsers")
         process.env.NUM_BROWSERS = `${numOfBrowser}`
-        await main("Prod", POC_LOG_FILE)
+        await main("Prod", POC_LOG_FILE, additionalDockerArgs, true)
     } catch(e){
         // Add error to poc log
         fs.appendFileSync(POC_LOG_FILE, `\n[${new Date().toISOString()}] Error: ${e.stack}\n`);
