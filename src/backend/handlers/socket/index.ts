@@ -49,13 +49,15 @@ export async function connectSocket(
             const clientId = store.get('clientId');
             const clientInfo = store.get('clientInfo');
             if(clientId && clientInfo) {  
-                globalState.socket.emit('register', { 
-                    clientId,
-                    clientInfo,
-                    publicKey: config.publicKey,
-                    version: app.getVersion(),
-                    numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
-                });
+                if(globalState.socket){
+                    globalState.socket.emit('register', { 
+                        clientId,
+                        clientInfo,
+                        publicKey: config.publicKey,
+                        version: app.getVersion(),
+                        numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
+                    });
+                }
             } else {
                 throw new Error("Client ID or client info not found");
             }
@@ -63,15 +65,15 @@ export async function connectSocket(
   
         globalState.socket.on('connect_error', (error) => {
             console.error('Socket.IO connection error:', error);
-            if(globalState.isConnected){
-                mainWindow?.webContents.send('socket-status', 'error');
-            }
+            mainWindow?.webContents.send('socket-status', 'error');
         });
   
         globalState.socket.on('disconnect', (reason) => {
             console.log('Socket disconnected:', reason);
             mainWindow?.webContents.send('socket-status', 'disconnected');
-            globalState.socket?.connect();
+            if(globalState.isConnected){
+                globalState.socket?.connect();
+            }
         });
   
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
