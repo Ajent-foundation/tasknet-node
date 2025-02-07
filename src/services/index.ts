@@ -110,43 +110,6 @@ export async function stopServices(): Promise<void> {
     })
 }
 
-export async function forceKillAtPort(port: number) {
-    return new Promise((resolve) => {
-        try {
-            const cmd = process.platform === 'win32'
-                ? `taskkill /F /PID $(netstat -ano | findstr :${port} | findstr LISTENING | awk "{print $5}") 2>nul || exit 0`
-                : `kill -9 $(lsof -t -i:${port} 2>/dev/null) 2>/dev/null || true`;
-
-            const subprocess = spawn(
-                process.platform === 'win32' ? 'cmd' : 'sh',
-                [process.platform === 'win32' ? '/c' : '-c', cmd],
-                { 
-                    shell: true,
-                    stdio: 'ignore' // Suppress all output
-                }
-            );
-
-            subprocess.on('close', () => {
-                resolve(true);
-            });
-
-            // Set a timeout to ensure the process doesn't hang
-            setTimeout(() => {
-                try {
-                    subprocess.kill();
-                } catch (e) {
-                    // Ignore any errors during kill
-                }
-                resolve(false);
-            }, 5000);
-
-        } catch (error) {
-            // If anything goes wrong, just resolve
-            resolve(false);
-        }
-    });
-}
-
 export async function startMobileNode() {
     /*
     try {

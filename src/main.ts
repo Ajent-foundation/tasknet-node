@@ -17,7 +17,6 @@ import {
 } from './backend/handlers/socket';
 import { 
     stopServices, getServicesStatus, 
-    forceKillAtPort,
     startMobileNode, killMobileNode, isMobileConnected
 } from './services';
 
@@ -109,11 +108,9 @@ app.on('before-quit', () => {
 async function cleanupProcesses() {
     console.log('Cleaning up processes...');
     await stopServices();
-    await forceKillAtPort(8051);
     await killMobileNode();
     
     // Shut down POC
-    //await forceKillAtPort(8200);
     try{
         await gracefulShutdownPOC()
         await gracefulShutdownScraper()

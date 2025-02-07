@@ -4,7 +4,7 @@ import { store } from "../../../store";
 import { app, BrowserWindow } from "electron";
 import { io } from "socket.io-client";
 import { getSettings } from "../settings";
-import { stopServices, forceKillAtPort, runServices } from "../../../services";
+import { stopServices, runServices } from "../../../services";
 import WebSocket from 'ws';
 
 export async function connectSocket(
@@ -16,8 +16,6 @@ export async function connectSocket(
     // Kill all services
     try{
         await stopServices();
-        await forceKillAtPort(parseInt(settings.browserManagerPort));
-        await forceKillAtPort(parseInt(settings.scraperServicePort));
     } catch(e){
         console.log(e)
     }
