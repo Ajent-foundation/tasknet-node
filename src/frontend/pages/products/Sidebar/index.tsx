@@ -3,6 +3,10 @@ import { Stack, Switch, Box, List, ListItem, ListItemButton, ListItemIcon, ListI
 import { TView, TListItem } from '../..';
 import { useState } from 'react';
 
+
+// Assets
+import Logo from '../../../assets/Logo';
+
 export interface ProductProps {
     onSelect: (view: TView) => void;
     selectedView: TView;
@@ -123,15 +127,7 @@ export default function Product({
                         gap="8px"
                         width="100%"
                     >
-                        <img src={"static://assets/Icon_Black.svg"} alt="Logo" width={"24px"} height={"24px"} style={{marginLeft: "8px"}}/>
-                        <Typography sx={{
-                            color: "#000",
-                            fontSize: "22px",
-                            fontWeight: 600,
-                            lineHeight: "24px"
-                        }}>
-                            Task Net
-                        </Typography>
+                        <Logo color="#000" width="150px" height="auto"/>
                     </Box>
 
                     {/* Public Key */}

@@ -26,6 +26,8 @@ declare global {
             startMobileNode: () => Promise<void>;
             killMobileNode: () => Promise<void>;
             isMobileConnected: () => Promise<boolean>;
+            openExternal: (url: string) => Promise<void>;
+            platform: string;
         }
     }
 }

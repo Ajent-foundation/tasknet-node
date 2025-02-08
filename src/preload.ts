@@ -24,5 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getPoints: () => ipcRenderer.invoke('get-points'),
     startMobileNode: () => ipcRenderer.invoke('start-mobile-node'),
     killMobileNode: () => ipcRenderer.invoke('kill-mobile-node'),
-    isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected')
+    isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected'),
+    openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+    platform: process.platform,
 });

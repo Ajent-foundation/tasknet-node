@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import { Stack, Paper } from "@mui/material";
 export interface IClient {
     connectedAt: Date;
@@ -127,6 +127,32 @@ export default function View({
             spacing={"16px"}
             sx={{ height: '100%' }}
         >        
+            {
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                    You must obtain an API key from the Task Net dashboard and save it in Settings to be able to go live.{' '}
+                    <span 
+                        onClick={() => window.electronAPI.openExternal('https://dashboard.tasknet.co/')}
+                        style={{ 
+                            color: '#1976d2', 
+                            textDecoration: 'underline', 
+                            cursor: 'pointer' 
+                        }}
+                    >
+                        https://dashboard.tasknet.co/
+                    </span>
+                </Alert>
+            }
+
+            {
+                !isOnBoarded &&
+                <Alert severity="error" sx={{ mb: 1 }}>
+                    Docker is not detected. Please ensure Docker Desktop is running and the Docker command is properly set up in your system PATH. Common Docker paths are:
+                    {window.electronAPI.platform === 'darwin' && " /usr/local/bin/docker, /opt/homebrew/bin/docker, or /Applications/Docker.app"}
+                    {window.electronAPI.platform === 'win32' && " C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe"}
+                    {window.electronAPI.platform === 'linux' && " /usr/bin/docker or /usr/local/bin/docker"}
+                </Alert>
+            }
+
             {/* OnBoarding */}
             {
                 !isOnBoarded &&
@@ -166,14 +192,16 @@ export default function View({
                                     maxWidth={"350px"}
                                 >
                                     <Typography sx={titleSx}>Download Docker Desktop</Typography>
-                                    <a 
-                                        href="https://www.docker.com/" 
-                                        style={nodeInfoSx}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <span 
+                                        onClick={() => window.electronAPI.openExternal('https://www.docker.com/')}
+                                        style={{ 
+                                            ...nodeInfoSx,
+                                            cursor: 'pointer',
+                                            textDecoration: 'underline'
+                                        }}
                                     >
                                         https://www.docker.com/
-                                    </a>
+                                    </span>
                                 </Box>
                             </Box>
 
@@ -441,7 +469,7 @@ export default function View({
                     flexGrow: 1,
                     height: 'auto',
                     maxHeight: "calc(100vh - 480px)",
-                    minHeight: "390px",
+                    minHeight: "310px",
                     padding: 0,
                     display: 'flex',
                     flexDirection: 'column'

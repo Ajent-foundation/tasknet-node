@@ -38,8 +38,8 @@ export function createWindow() {
             contextIsolation: true, // Security: Keep this true
             webSecurity: true,
         },
-        resizable: false,
-        maximizable: false,
+        resizable: true,
+        maximizable: true,
         fullscreenable: true,
         center: true
     });
@@ -72,9 +72,10 @@ export function createWindow() {
     })
   
     // Handle minimize behavior
-    mainWindow.on('will-resize', function (event) {
-        event.preventDefault()
-        mainWindow.hide()
+    mainWindow.on('will-resize', function (event, newBounds) {
+        if (newBounds.width < 1280 || newBounds.height < 900) {
+            event.preventDefault();
+        }
     })
   
     // and load the index.html of the app.

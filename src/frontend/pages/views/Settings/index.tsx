@@ -74,6 +74,83 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
             <Alert severity="info" sx={{ mb: 1 }}>
                 Some settings changes will only take effect after toggling Go live again
             </Alert>
+
+            <Alert severity="warning" sx={{ mb: 1 }}>
+                You must obtain a new API key from the Task Net dashboard to be able to go live
+            </Alert>
+
+            <Section 
+                title="Node" 
+                fields={[
+                    [
+                        {
+                            id: "nodeProtocol",
+                            label: "Protocol",
+                            value: settings.nodeProtocol,
+                            type: "select",
+                            isReadOnly: true,
+                            options: [
+                                { label: "http", value: "http" },
+                                { label: "https", value: "https" }
+                            ]
+                        },
+                        {
+                            id: "wsProtocol",
+                            label: "Websocket Protocol",
+                            value: settings.wsProtocol,
+                            type: "select",
+                            isReadOnly: true,
+                            options: [
+                                { label: "ws", value: "ws" },
+                                { label: "wss", value: "wss" }
+                            ]
+                        },
+                        {
+                            id: "serverIpOrDomain",
+                            label: "IP (domain or ip only)",
+                            isReadOnly: true,
+                            value: settings.serverIpOrDomain,
+                            type: "text",
+                            hint: "The URL where your node server is running (e.g., localhost)"
+                        },
+                        {
+                            id: "serverPort",
+                            label: "Port",
+                            isReadOnly: true,
+                            value: settings.serverPort,
+                            type: "text",
+                            hint: "The port where your node server is running (e.g., 3000)"
+                        },
+                        {
+                            id: "dontConnectOnGoLive",
+                            label: "Don't connect to server on Go live",
+                            value: settings.dontConnectOnGoLive.toString(),
+                            type: "toggle"
+                        },
+                    ],
+                    [
+                        {
+                            id: "apiKeyId",
+                            label: "Node API Key UUID",
+                            value: settings.apiKeyId,
+                            type: "password"
+                        },
+                        {
+                            id: "apiKey",
+                            label: "Node API Key",
+                            value: settings.apiKey,
+                            type: "password"
+                        }
+                    ],
+                ]}
+                onSavedFields={(fields: Record<string, string>) => {
+                    onKeysChange({
+                        ...settings,
+                        ...fields
+                    });
+                }}
+                showSaveButton={true}
+            />
             
             <Paper sx={{...paperSx, height: "fit-content", padding: "24px"}}>
                 <Box
@@ -88,7 +165,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                         alignItems="center"
                     >
                         <Typography sx={titleSx}>
-                            Wallet
+                            Node Keys
                         </Typography>
                     </Box>
 
@@ -98,7 +175,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                         gap={"8px"}
                     >
                         <Box display="flex" flexDirection="column" gap="6px">
-                            <Typography sx={labelSx}>Wallet Public Key</Typography>
+                            <Typography sx={labelSx}>Public Key (SOL)</Typography>
                             <Box sx={{ display: 'flex', gap: '8px' }}>
                                 <Typography sx={valueSx}>
                                     {publicKey}
@@ -137,7 +214,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                             </Box>
                         </Box>
                         <Box display="flex" flexDirection="column" gap="6px">
-                            <Typography sx={labelSx}>Wallet Private Key</Typography>
+                            <Typography sx={labelSx}>Private Key (SOL)</Typography>
                             <Box sx={{ display: 'flex', gap: '8px' }}>
                                 <Box sx={{ 
                                     position: 'relative', 
@@ -206,74 +283,6 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
             </Paper>
 
             <Section 
-                title="Node" 
-                fields={[
-                    [
-                        {
-                            id: "nodeProtocol",
-                            label: "Protocol",
-                            value: settings.nodeProtocol,
-                            type: "select",
-                            options: [
-                                { label: "http", value: "http" },
-                                { label: "https", value: "https" }
-                            ]
-                        },
-                        {
-                            id: "wsProtocol",
-                            label: "Websocket Protocol",
-                            value: settings.wsProtocol,
-                            type: "select",
-                            options: [
-                                { label: "ws", value: "ws" },
-                                { label: "wss", value: "wss" }
-                            ]
-                        },
-                        {
-                            id: "serverIpOrDomain",
-                            label: "IP (domain or ip only)",
-                            value: settings.serverIpOrDomain,
-                            type: "text",
-                            hint: "The URL where your node server is running (e.g., localhost)"
-                        },
-                        {
-                            id: "serverPort",
-                            label: "Port",
-                            value: settings.serverPort,
-                            type: "text",
-                            hint: "The port where your node server is running (e.g., 3000)"
-                        },
-                        {
-                            id: "dontConnectOnGoLive",
-                            label: "Don't connect to server on Go live",
-                            value: settings.dontConnectOnGoLive.toString(),
-                            type: "toggle"
-                        },
-                    ],
-                    [
-                        {
-                            id: "apiKey",
-                            label: "Node API Key",
-                            value: settings.apiKey,
-                            type: "password"
-                        },
-                        {
-                            id: "apiKeyId",
-                            label: "Node API Key ID",
-                            value: settings.apiKeyId,
-                            type: "password"
-                        }
-                    ],
-                ]}
-                onSavedFields={(fields: Record<string, string>) => {
-                    onKeysChange({
-                        ...settings,
-                        ...fields
-                    });
-                }}
-                showSaveButton={true}
-            />
-            <Section 
                 title="Browser Container Manager"
                 fields={[
                     [
@@ -319,21 +328,21 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                     [
                         {
                             id: "expressPort",
-                            label: "Express PORT Number",
+                            label: "Base Express PORT Number",
                             value: settings.expressPort,
                             type: "text",
                             hint: "Must be a number between 1-65535"
                         },
                         {
                             id: "vncPort",
-                            label: "VNC PORT Number",
+                            label: "Base VNC PORT Number",
                             value: settings.vncPort,
                             type: "text",
                             hint: "Must be a number between 1-65535"
                         },
                         {
                             id: "cdpPort",
-                            label: "CDP PORT Number",
+                            label: "Base CDP PORT Number",
                             value: settings.cdpPort,
                             type: "text",
                             hint: "Must be a number between 1-65535"
@@ -355,6 +364,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                         id: "browserImageName",
                         label: "Browser Image Name",
                         value: settings.browserImageName,
+                        isReadOnly: true,
                         type: "text",
                         hint: "Docker image name for the browser container"
                     }],

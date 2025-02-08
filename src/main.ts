@@ -19,6 +19,7 @@ import {
     stopServices, getServicesStatus, 
     startMobileNode, killMobileNode, isMobileConnected
 } from './services';
+import { shell } from 'electron';
 
 
 import { init } from './backend/handlers/init';
@@ -165,3 +166,6 @@ ipcMain.handle('get-points', getPoints);
 ipcMain.handle('start-mobile-node', startMobileNode);
 ipcMain.handle('kill-mobile-node', killMobileNode);
 ipcMain.handle('is-mobile-connected', isMobileConnected);
+ipcMain.handle('open-external', async (_, url) => {
+    await shell.openExternal(url);
+});

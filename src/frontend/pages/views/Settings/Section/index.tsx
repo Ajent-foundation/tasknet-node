@@ -8,6 +8,7 @@ export interface IFormField {
     value: string,
     type: "text" | "password" | "slider" | "toggle" | "checkbox" | "select" | "map" ,
     validate?: (value: unknown) => boolean,
+    isReadOnly?: boolean,
     options?: Array<{label: string, value: string}>, // For select type
     min?: number,  // For slider type
     max?: number,  // For slider type
@@ -171,6 +172,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                         onChange={(e) => handleChange(field.id, e.target.value)}
                                                         sx={inputSx}
                                                         fullWidth
+                                                        disabled={field.isReadOnly}
                                                     />
                                                 </Box>
                                             );
@@ -181,6 +183,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                 value={values[field.id] || field.value}
                                                 onChange={(value) => handleChange(field.id, value)}
                                                 hint={field.hint}
+                                                isReadOnly={field.isReadOnly}
                                             />;
                                         case "slider":
                                             return <SliderField
@@ -192,6 +195,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                 step={field.step || 1}
                                                 onChange={(value) => handleChange(field.id, value)}
                                                 hint={field.hint}
+                                                isReadOnly={field.isReadOnly}
                                             />;
                                         case "select":
                                             return <SelectField
@@ -201,6 +205,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                 options={field.options || []}
                                                 onChange={(value) => handleChange(field.id, value)}
                                                 hint={field.hint}
+                                                isReadOnly={field.isReadOnly}
                                             />;
                                         case "toggle":
                                             return <ToggleField
@@ -272,11 +277,12 @@ const LabelWithHint = ({ label, hint }: { label: string, hint?: string }) => (
     </Box>
 );
 
-const PasswordField = ({ label, value, onChange, hint }: {
+const PasswordField = ({ label, value, onChange, hint, isReadOnly }: {
     label: string,
     value: string,
     onChange: (value: string) => void,
-    hint?: string
+    hint?: string,
+    isReadOnly?: boolean
 }) => {
     const [showPassword, setShowPassword] = useState(false);
     
@@ -291,9 +297,10 @@ const PasswordField = ({ label, value, onChange, hint }: {
                     sx={inputSx}
                     fullWidth
                     variant="outlined"
+                    disabled={isReadOnly}
                     slotProps={{
                         input: {
-                            endAdornment: (
+                            endAdornment: !isReadOnly && (
                                 <IconButton
                                     onClick={() => setShowPassword(!showPassword)}
                                     edge="end"
@@ -309,16 +316,16 @@ const PasswordField = ({ label, value, onChange, hint }: {
     );
 };
 
-const SliderField = ({ label, value, min, max, step, onChange, hint }: {
+const SliderField = ({ label, value, min, max, step, onChange, hint, isReadOnly }: {
     label: string,
     value: number,
     min: number,
     max: number,
     step: number,
     onChange: (value: number) => void,
-    hint?: string
+    hint?: string,
+    isReadOnly?: boolean
 }) => {
-    // Convert value to number if it's a string
     const numericValue = typeof value === 'string' ? parseFloat(value) : value;
     
     return (
@@ -333,6 +340,7 @@ const SliderField = ({ label, value, min, max, step, onChange, hint }: {
                     step={step}
                     marks
                     valueLabelDisplay="auto"
+                    disabled={isReadOnly}
                 />
             </Box>
         </Box>
@@ -395,12 +403,13 @@ const MapField = ({ label, fields, values, onChange, hint }: {
     );
 };
 
-const SelectField = ({ label, value, options, onChange, hint }: {
+const SelectField = ({ label, value, options, onChange, hint, isReadOnly }: {
     label: string,
     value: string,
     options: Array<{label: string, value: string}>,
     onChange: (value: string) => void,
-    hint?: string
+    hint?: string,
+    isReadOnly?: boolean
 }) => {
     return (
         <Box display="flex" flexDirection="column" gap="6px">
@@ -417,6 +426,7 @@ const SelectField = ({ label, value, options, onChange, hint }: {
                         color: '#1A1A1E',
                     }
                 }}
+                disabled={isReadOnly}
                 MenuProps={{
                     PaperProps: {
                         sx: {
