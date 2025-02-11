@@ -34,8 +34,8 @@ export function createWindow() {
         icon: image,
         webPreferences: {
             preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
-            nodeIntegration: true, // Security: Keep this false
-            contextIsolation: true, // Security: Keep this true
+            nodeIntegration: false,
+            contextIsolation: true,
             webSecurity: true,
         },
         resizable: true,
