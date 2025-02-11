@@ -7,6 +7,13 @@ import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
 import WebSocket from 'ws';
 
+const HEARTBEAT_INTERVAL = 5000;
+const DOWNLOAD_TEST_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
+
+// Add heartbeat interval
+let heartbeatInterval: NodeJS.Timeout;
+
 export async function connectSocket(
     mainWindow: BrowserWindow
 ){
@@ -44,6 +51,35 @@ export async function connectSocket(
             console.log("Socket connected");
             globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
+
+            // Start heartbeat after connection
+            heartbeatInterval = setInterval(() => {
+                if (globalState.socket?.connected) {
+                    globalState.socket.emit('heartbeat');
+                }
+            }, HEARTBEAT_INTERVAL);
+
+            // Handle bandwidth test requests
+            globalState.socket.on('test-bandwidth', () => {
+                //try {
+                //    console.log("test-bandwidth")
+                //    // First, request download test
+                //    if (globalState.socket) globalState.socket.emit('bandwidth-download-test-request');
+                //
+                //    // Then perform upload test
+                //    const uploadPayload = '0'.repeat(UPLOAD_TEST_FILE_SIZE);
+                //    if (globalState.socket) globalState.socket.emit('bandwidth-upload-test', { payload: uploadPayload });
+                //} catch (error) {
+                //    console.error('Bandwidth test failed:', error);
+                //}
+            });
+
+            // Handle download test
+            globalState.socket.on('bandwidth-download-test', (data: { payload: string }) => {
+                // Simulate download by receiving the payload
+                if (globalState.socket) globalState.socket.emit('bandwidth-download-test-complete');
+            });
+
             
             // Self Register
             const clientId = store.get('clientId');
@@ -74,6 +110,10 @@ export async function connectSocket(
             if(globalState.isConnected){
                 globalState.socket?.connect();
             }
+        });
+
+        globalState.socket.on("error", (error) => {
+            console.error('Socket.IO connection error:', error);
         });
   
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
@@ -200,6 +240,11 @@ export async function  disconnectSocket(){
             return { status: 'already_disconnected' };
         }
 
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+        }
+
+        globalState.socket.removeAllListeners('heartbeat');
         globalState.socket.disconnect();
         globalState.socket = null;
         return { status: 'disconnected' };

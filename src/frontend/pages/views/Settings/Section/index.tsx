@@ -168,7 +168,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                 <Box display="flex" flexDirection="column" gap="6px">
                                                     <LabelWithHint label={field.label} hint={field.hint} />
                                                     <TextField
-                                                        value={values[field.id] || field.value}
+                                                        value={values[field.id]}
                                                         onChange={(e) => handleChange(field.id, e.target.value)}
                                                         sx={inputSx}
                                                         fullWidth
@@ -180,7 +180,7 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                             return <PasswordField
                                                 key={colIndex}
                                                 label={field.label}
-                                                value={values[field.id] || field.value}
+                                                value={values[field.id]}
                                                 onChange={(value) => handleChange(field.id, value)}
                                                 hint={field.hint}
                                                 isReadOnly={field.isReadOnly}
@@ -360,9 +360,6 @@ const MapField = ({ label, fields, values, onChange, hint }: {
             [key]: value
         });
     };
-
-    console.log("values", values);
-    console.log("fields", fields);
 
     return (
         <Box display="flex" flexDirection="column" gap="8px">
