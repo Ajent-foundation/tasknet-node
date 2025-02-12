@@ -31,6 +31,8 @@ export function getSystemInfo() {
         freeMemory: os.freemem(),
         totalMemory: os.totalmem(),
         cpuModel: os.cpus()[0].model,
+        cpuCores: os.cpus().length,
+        cpuSpeed: os.cpus()[0].speed,
         hostname: os.hostname()
     };
 }

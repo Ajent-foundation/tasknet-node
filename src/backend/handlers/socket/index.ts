@@ -5,10 +5,10 @@ import { app, BrowserWindow } from "electron";
 import { io } from "socket.io-client";
 import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
+import { getSystemReport } from "../system";
 import WebSocket from 'ws';
 
 const HEARTBEAT_INTERVAL = 5000;
-const DOWNLOAD_TEST_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
 
 // Add heartbeat interval
@@ -47,7 +47,7 @@ export async function connectSocket(
             }
         });
   
-        globalState.socket.on('connect', () => {
+        globalState.socket.on('connect', async () => {
             console.log("Socket connected");
             globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
@@ -61,26 +61,24 @@ export async function connectSocket(
 
             // Handle bandwidth test requests
             globalState.socket.on('test-bandwidth', () => {
-                //try {
-                //    console.log("test-bandwidth")
-                //    // First, request download test
-                //    if (globalState.socket) globalState.socket.emit('bandwidth-download-test-request');
-                //
-                //    // Then perform upload test
-                //    const uploadPayload = '0'.repeat(UPLOAD_TEST_FILE_SIZE);
-                //    if (globalState.socket) globalState.socket.emit('bandwidth-upload-test', { payload: uploadPayload });
-                //} catch (error) {
-                //    console.error('Bandwidth test failed:', error);
-                //}
+                try {
+                    // First, request download test
+                    if (globalState.socket) globalState.socket.emit('bandwidth-download-test-request');
+
+                    // Then perform upload test
+                    const uploadPayload = '0'.repeat(UPLOAD_TEST_FILE_SIZE);
+                    if (globalState.socket) globalState.socket.emit('bandwidth-upload-test', { payload: uploadPayload, startedOn: new Date().getTime() });
+                } catch (error) {
+                    console.error('Bandwidth test failed:', error);
+                }
             });
 
             // Handle download test
             globalState.socket.on('bandwidth-download-test', (data: { payload: string }) => {
                 // Simulate download by receiving the payload
-                if (globalState.socket) globalState.socket.emit('bandwidth-download-test-complete');
+                if (globalState.socket) globalState.socket.emit('bandwidth-download-test-complete', { startedOn: new Date().getTime() });
             });
 
-            
             // Self Register
             const clientId = store.get('clientId');
             const clientInfo = store.get('clientInfo');
@@ -88,9 +86,10 @@ export async function connectSocket(
                 if(globalState.socket){
                     globalState.socket.emit('register', { 
                         clientId,
-                        clientInfo,
+                        clientInfo: clientInfo,
                         publicKey: config.publicKey,
                         version: app.getVersion(),
+                        fullReport: await getSystemReport(),
                         numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
                     });
                 }
