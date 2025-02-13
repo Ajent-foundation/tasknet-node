@@ -10,7 +10,7 @@ declare global {
             getNodesInfo: () => Promise<any>;
             connectSocket: () => Promise<void>;
             disconnectSocket: () => Promise<void>;
-            onSocketStatus: (callback: (status: string) => void) => void;
+            onSocketStatus: (callback: (status: string, data: {clientId: string}) => void) => void;
             getStoredClient: () => Promise<StoreData>;
             storeClientInfo: (clientInfo: StoreData) => Promise<void>;
             getSystemInfo: () => Promise<StoreData['clientInfo']>;
@@ -22,7 +22,7 @@ declare global {
             init: () => Promise<{publicKey: string, privateKey: string, version: string}>;
             getSettings: () => Promise<Settings>;
             updateSettings: (newSettings: Partial<Settings>) => Promise<Settings>;
-            getPoints: () => Promise<{points: number}>;
+            getPoints: (clientId: string) => Promise<{points: number}>;
             startMobileNode: () => Promise<void>;
             killMobileNode: () => Promise<void>;
             isMobileConnected: () => Promise<boolean>;

@@ -162,7 +162,7 @@ ipcMain.handle('init', init);
 ipcMain.handle('check-docker', checkDocker);
 ipcMain.handle('get-settings', getSettings);
 ipcMain.handle('update-settings', updateSettings);
-ipcMain.handle('get-points', getPoints);
+ipcMain.handle('get-points',async (_, clientId) => getPoints(clientId));
 ipcMain.handle('start-mobile-node', startMobileNode);
 ipcMain.handle('kill-mobile-node', killMobileNode);
 ipcMain.handle('is-mobile-connected', isMobileConnected);

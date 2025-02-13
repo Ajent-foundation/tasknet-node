@@ -59,9 +59,9 @@ export default function Page() : JSX.Element {
     const [isMobileConnecting, setIsMobileConnecting] = useState(false);
     const [logService, setLogService] = useState<"proxy" | "controller" | "api" | "mobile-node" | null>(null);
     const [hasDocker, setHasDocker] = useState(false);
-    const [myPoints, setMyPoints] = useState("Points: coming soon!");
+    const [myPoints, setMyPoints] = useState("Points: --");
     const [warning, setWarning] = useState<string | undefined>(undefined);
-
+    const [clientId, setClientId] = useState<string | null>(null);
     const [settings, setSettings] = useState<ISettings | null>(null);
     useEffect(() => {
         window.electronAPI.getSettings().then((settings) => {
@@ -72,16 +72,26 @@ export default function Page() : JSX.Element {
 
     // Points
     useEffect(() => {
-        window.electronAPI.getPoints().then((points) => {
-            console.log("Points", points);
-            if(points.points === -1) {
-                setMyPoints("Points: coming soon!");
-            } else {
-                setMyPoints(`Points: ${points.points}`);
-            }
-        });
-    }, []);
+        const updatePoints = async () => {
+            window.electronAPI.getPoints(clientId).then((points) => {
+                console.log("Points", points);
+                if(!points || points.points === -1) {
+                    setMyPoints("Points: --");
+                } else {
+                    setMyPoints(`Points: ${points.points.toLocaleString()}`);
+                }
+            });
+        };
 
+        // Initial fetch
+        updatePoints();
+
+        // Set up interval
+        const interval = setInterval(updatePoints, 30000);
+
+        // Cleanup on unmount
+        return () => clearInterval(interval);
+    }, [clientId]);
 
     useEffect(() => {
         const checkDocker = async () => {
@@ -174,8 +184,12 @@ export default function Page() : JSX.Element {
         //});
 
         // Listen for socket status changes
-        window.electronAPI.onSocketStatus((status) => {
+        window.electronAPI.onSocketStatus((status: string, data: {clientId: string}) => {
             setIsConnected(status === 'connected');
+            if(data && data.clientId) {
+                console.log("Client ID", data.clientId);
+                setClientId(data.clientId.split("::")[0]);
+            }
         });
     }, []);
 

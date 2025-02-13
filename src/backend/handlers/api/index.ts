@@ -12,10 +12,10 @@ export async function getNodesInfo() {
     }
 }
 
-export async function getPoints() {
+export async function getPoints(clientId: string) {
     try {        
         const settings = getSettings();
-        const response = await fetch(`${settings.nodeProtocol}://${settings.serverIpOrDomain}${settings.serverPort !== "" ? `:${settings.serverPort}` : ""}/v1/points`);
+        const response = await fetch(`${settings.nodeProtocol}://${settings.serverIpOrDomain}${settings.serverPort !== "" ? `:${settings.serverPort}` : ""}/points?clientId=${clientId}`);
         const data = await response.json();
 
         // if the response is not ok, return -1

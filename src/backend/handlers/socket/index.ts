@@ -118,7 +118,11 @@ export async function connectSocket(
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
             mainWindow?.webContents.send('socket-status', `reconnecting:${attemptNumber}`);
         });
-  
+
+        globalState.socket.on('client-id', (clientId) => {
+            mainWindow?.webContents.send('socket-status', 'connected', clientId);
+        });
+
         // Add the proxy request handler here
         globalState.socket.on('proxy-request', (message) => {
             console.log("Proxy request received", message);

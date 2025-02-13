@@ -6,8 +6,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     connectSocket: () => ipcRenderer.invoke('connect-socket'),
     disconnectSocket: () => ipcRenderer.invoke('disconnect-socket'),
     onSocketStatus: (
-        callback: (status: string) => void) => {
-            ipcRenderer.on('socket-status', (_event, status) => callback(status)
+        callback: (status: string, data: {clientId: string}) => void) => {
+            ipcRenderer.on('socket-status', (_event, status, data) => callback(status, data)
         );
     },
     getStoredClient: () => ipcRenderer.invoke('get-stored-client'),
