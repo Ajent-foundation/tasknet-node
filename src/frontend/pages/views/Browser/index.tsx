@@ -272,7 +272,7 @@ export default function View({
                                         VNC: {browser.ports.vnc}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                                {/*<Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
                                     <Button 
                                         variant="contained"
                                         fullWidth
@@ -288,7 +288,7 @@ export default function View({
                                     >
                                         View (VNC)
                                     </Button>
-                                </Box>
+                                </Box>*/}
                             </Box>
                         </Paper>
                     ))}
