@@ -110,7 +110,7 @@ export async function connectSocket(
         });
 
         globalState.socket.on('disconnect', (reason) => {
-            console.log('Socket disconnected:', reason);
+            console.log('Socket disconnected______:', reason);
             mainWindow?.webContents.send('socket-status', 'disconnected', reason);
             if(globalState.isConnected){
                 globalState.socket?.connect();
@@ -178,38 +178,81 @@ export async function connectSocket(
         });
 
         // Handle WebSocket proxy routing
-        // Upcoming feature
-        /*
         globalState.socket.on('proxy-ws-connect', async (message) => {
             const { path, requestId } = message;
+            let localWs: WebSocket | null = null;
+            
             try {
-                // Create WebSocket connection to local service
-                const localWs = new WebSocket(`ws://localhost:8051${path}`);
-                
+                // First ensure any existing connection with the same requestId is cleaned up
+                globalState.socket?.emit(`proxy-ws-close:${requestId}`);
+                globalState.socket?.off(`proxy-ws-message:${requestId}`);
+
+                localWs = new WebSocket(`ws://localhost:${settings.scraperServicePort}${path}`);
+                const messageBuffer: Buffer[] = [];
+
+                // Set a connection timeout
+                const connectionTimeout = setTimeout(() => {
+                    if (localWs?.readyState !== WebSocket.OPEN) {
+                        localWs?.terminate();
+                        globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
+                            error: 'Connection timeout' 
+                        });
+                    }
+                }, 10000); // 10 second timeout
+
                 localWs.on('open', () => {
+                    clearTimeout(connectionTimeout);
                     console.log(`Local WebSocket connected for ${path}`);
-                    
-                    // Forward messages from cloud to local service
-                    globalState.socket?.on(`proxy-ws-message:${requestId}`, (data) => {
-                        if (localWs.readyState === WebSocket.OPEN) {
-                            localWs.send(JSON.stringify(data));
+
+                    // Process any buffered messages
+                    while (messageBuffer.length > 0) {
+                        const data = messageBuffer.shift();
+                        if (localWs?.readyState === WebSocket.OPEN && data) {
+                            localWs.send(data);
                         }
-                    });
+                    }
+
+                    // Forward messages from cloud to local service
+                    const handleProxyMessage = (packet: {data: Buffer, type: string}) => {
+                        if (localWs?.readyState === WebSocket.OPEN) {
+                            localWs.send(packet.type === "utf8" ? packet.data.toString("utf8") : packet.data);
+                        } else {
+                            messageBuffer.push(packet.data);
+                        }
+                    };
+
+                    globalState.socket?.on(`proxy-ws-message:${requestId}`, handleProxyMessage);
 
                     // Forward messages from local service to cloud
                     localWs.on('message', (data) => {
-                        globalState.socket?.emit(`proxy-ws-message:${requestId}`, JSON.parse(data.toString()));
+                        if (globalState.socket?.connected) {
+                            globalState.socket.emit(`proxy-ws-message:${requestId}`, data);
+                        }
                     });
 
                     // Handle WebSocket closure
-                    localWs.on('close', () => {
-                        globalState.socket?.emit(`proxy-ws-close:${requestId}`);
+                    const cleanup = () => {
                         globalState.socket?.off(`proxy-ws-message:${requestId}`);
+                        if (localWs) {
+                            if (localWs.readyState === WebSocket.OPEN) {
+                                localWs.close();
+                            } else if (localWs.readyState === WebSocket.CONNECTING) {
+                                localWs.terminate();
+                            }
+                            localWs = null;
+                        }
+                    };
+
+                    localWs.on('close', (code, reason) => {
+                        console.log(`WebSocket closed - Code: ${code}, Reason: ${reason}`);
+                        globalState.socket?.emit(`proxy-ws-close:${requestId}`);
+                        cleanup();
                     });
 
-                    // Handle WebSocket errors
                     localWs.on('error', (error) => {
+                        console.error('WebSocket error:', error.message);
                         globalState.socket?.emit(`proxy-ws-error:${requestId}`, { error: error.message });
+                        cleanup();
                     });
 
                     // Notify successful connection
@@ -218,11 +261,14 @@ export async function connectSocket(
 
                 // Handle initial connection errors
                 localWs.on('error', (error) => {
+                    clearTimeout(connectionTimeout);
+                    console.error('WebSocket connection error:', error.message);
                     globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
                         error: `Failed to connect to local service: ${error.message}` 
                     });
                 });
             } catch (error) {
+                console.error('WebSocket setup error:', error);
                 globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
                     error: `Failed to establish WebSocket connection: ${error.message}` 
                 });
@@ -234,7 +280,6 @@ export async function connectSocket(
             const { requestId } = message;
             globalState.socket?.off(`proxy-ws-message:${requestId}`);
         });
-        */
 
         return { 
             status: 'connected'
