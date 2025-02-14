@@ -65,30 +65,43 @@ const valueSx = {
 }
 
 export default function Component({ title, showSaveButton = false, onSave, onSavedFields, fields = [] }: IProps) : JSX.Element {
-    const [values, setValues] = useState<Record<string, any>>({});
-    const [initialValues, setInitialValues] = useState<Record<string, any>>({});
-
-    // Initialize initialValues when fields change
-    useEffect(() => {
+    const [values, setValues] = useState<Record<string, any>>(() => {
         const initial: Record<string, any> = {};
         fields.flat().forEach(field => {
             if (field.type === 'toggle' || field.type === 'checkbox') {
                 initial[field.id] = field.value === 'true';
             } else if (field.type === 'map') {
-                // Initialize map fields with empty object if no value is provided
                 initial[field.id] = field.value || {};
             } else {
-                initial[field.id] = field.value;
+                initial[field.id] = field.value || '';
             }
         });
-        setInitialValues(initial);
-        setValues(initial);
-    }, [fields]);
+        return initial;
+    });
+    
+    const [initialValues, setInitialValues] = useState<Record<string, any>>(() => {
+        const initial: Record<string, any> = {};
+        fields.flat().forEach(field => {
+            if (field.type === 'toggle' || field.type === 'checkbox') {
+                initial[field.id] = field.value === 'true';
+            } else if (field.type === 'map') {
+                initial[field.id] = field.value || {};
+            } else {
+                initial[field.id] = field.value || '';
+            }
+        });
+        return initial;
+    });
 
     const hasChanges = useMemo(() => {
-        return Object.keys(initialValues).some(key => 
-            initialValues[key] !== values[key]
-        );
+        return Object.keys(initialValues).some(key => {
+            // For objects (like map type), do a deep comparison
+            if (typeof initialValues[key] === 'object' && initialValues[key] !== null) {
+                return JSON.stringify(initialValues[key]) !== JSON.stringify(values[key]);
+            }
+            // For primitive values, do a direct comparison
+            return initialValues[key] !== values[key];
+        });
     }, [initialValues, values]);
 
     const handleChange = (key: string, value: unknown) => {
@@ -114,6 +127,8 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
             });
             onSavedFields(stringValues);
         }
+        // Update initialValues to match the new values after saving
+        setInitialValues({...values});
     };
 
     return fields.length > 0 && <Paper sx={{...{

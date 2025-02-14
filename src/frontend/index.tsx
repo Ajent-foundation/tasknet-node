@@ -27,6 +27,8 @@ declare global {
             killMobileNode: () => Promise<void>;
             isMobileConnected: () => Promise<boolean>;
             openExternal: (url: string) => Promise<void>;
+            getNodeLimit: () => Promise<number>;
+            getCurrentNumOfBrowsers: () => Promise<number>;
             platform: string;
         }
     }

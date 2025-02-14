@@ -26,5 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     killMobileNode: () => ipcRenderer.invoke('kill-mobile-node'),
     isMobileConnected: () => ipcRenderer.invoke('is-mobile-connected'),
     openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+    getNodeLimit: () => ipcRenderer.invoke('met-my-node-limit'),
+    getCurrentNumOfBrowsers: () => ipcRenderer.invoke('get-current-num-of-browsers'),
     platform: process.platform,
 });

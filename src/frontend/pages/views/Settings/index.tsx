@@ -1,5 +1,5 @@
 import { Box, Paper, Typography, Tooltip, IconButton, Alert } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { Settings } from "../../../../store";
@@ -24,6 +24,14 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
             setTimeout(() => setCopiedPublicKey(false), 2000);
         });
     }
+
+    const [maxNumOfBrowsers, setMaxNumOfBrowsers] = useState(1);
+    useEffect(() => {
+        window.electronAPI.getNodeLimit().then((limit) => {
+            console.log("Max num of browsers", limit);
+            setMaxNumOfBrowsers(limit);
+        });
+    }, []);
 
     const paperSx = {
         borderRadius: "4px",
@@ -72,7 +80,17 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
             }}
         >
             <Alert severity="info" sx={{ mb: 1 }}>
-                Some settings changes will only take effect after toggling Go live again
+                Some settings changes will only take effect after toggling Go live again or restarting the node:{' '}
+                <span 
+                    onClick={() => window.electronAPI.openExternal('https://dev-docs.tasknet.co/')}
+                    style={{ 
+                        color: '#1976d2', 
+                        textDecoration: 'underline', 
+                        cursor: 'pointer' 
+                    }}
+                >
+                    https://dev-docs.tasknet.co/
+                </span>
             </Alert>
 
             <Alert severity="warning" sx={{ mb: 1 }}>
@@ -323,7 +341,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                         value: settings.numOfBrowser.toString(),
                         type: "slider",
                         min: 1,
-                        max: 20
+                        max: maxNumOfBrowsers
                     }],
                     [
                         {

@@ -18,12 +18,14 @@ interface IProps {
     isOnBoarded: boolean;
     myNodeInfo: IClient["info"] | null;
     browsersNum: number;
+    updater: number;
 }
 
 export default function View({
     isOnBoarded,
     browsersNum,
     myNodeInfo,
+    updater
 }: IProps) : JSX.Element {
     // Info
     const [nodes, setNodes] = useState<IClient[]>([]);
@@ -35,9 +37,8 @@ export default function View({
         const fetchNodesInfo = () => {
             window.electronAPI.getNodesInfo()
                 .then(data => {
-                    console.log(data)
-                    if(data.nodes) setNodes(data.nodes)
-                    if(data.browsers) setLiveBrowsersNum(data.browsers)
+                    setNodes(data.nodes)
+                    setLiveBrowsersNum(data.browsers)
                 })
                 .catch(err => console.error('Failed to fetch nodes:', err));
         };
@@ -50,7 +51,7 @@ export default function View({
 
         // Cleanup interval on component unmount
         return () => clearInterval(interval);
-    }, []);
+    }, [updater]);
 
     const toggleNodeExpansion = (nodeId: string) => {
         setExpandedNodes(prev => {
@@ -129,7 +130,7 @@ export default function View({
         >        
             {
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                    You must obtain an API key from the Task Net dashboard and save it in Settings to be able to go live.{' '}
+                    You must obtain an API key from the Task Net dashboard and save it in Settings to be able to go live:{' '}
                     <span 
                         onClick={() => window.electronAPI.openExternal('https://dashboard.tasknet.co/')}
                         style={{ 

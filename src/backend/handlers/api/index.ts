@@ -2,7 +2,7 @@ import { getSettings } from "../settings";
 
 export async function getNodesInfo() {
     try {
-        const settings = getSettings();
+        const settings = await getSettings();
         const response = await fetch(`${settings.nodeProtocol}://${settings.serverIpOrDomain}${settings.serverPort !== "" ? `:${settings.serverPort}` : ""}/v1/operators/info`);
         const data = await response.json();
         return data;
@@ -14,7 +14,7 @@ export async function getNodesInfo() {
 
 export async function getPoints(clientId: string) {
     try {        
-        const settings = getSettings();
+        const settings = await getSettings();
         const response = await fetch(`${settings.nodeProtocol}://${settings.serverIpOrDomain}${settings.serverPort !== "" ? `:${settings.serverPort}` : ""}/points?clientId=${clientId}`);
         const data = await response.json();
 

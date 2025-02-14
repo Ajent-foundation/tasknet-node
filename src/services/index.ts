@@ -11,7 +11,7 @@ async function checkServiceRunning(
     service: string, 
     attempts: number = 30
 ): Promise<boolean> {
-    const settings = getSettings();
+    const settings = await getSettings();
 
     // Wait for service to be responsive (adjust timeout as needed)
     for (let i = 0; i < attempts; i++) {
@@ -53,7 +53,7 @@ export async function runServices(): Promise<{
         error?: string;
     }[];
 }> {
-    const settings = getSettings();
+    const settings = await getSettings();
 
     // RUNNING SERVICES
     const startupResults = await Promise.all(

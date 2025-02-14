@@ -1,5 +1,5 @@
 import { Settings, store } from "../../../store";
-
+import { getNodeLimit } from "../system";
 const defaultSettings = {
     // Node settings
     nodeProtocol: 'https',
@@ -35,20 +35,24 @@ const defaultSettings = {
     anthropicKey: '',
 }
 
-export function getSettings(): Settings {
-    const settings = store.get('settings', defaultSettings);
+export async function getSettings(): Promise<Settings> {
+    const settings = store.get('settings', defaultSettings) as Settings;
+    // Get system limit
+    const systemLimit = await getNodeLimit();
+
     if(settings && typeof settings === 'object'){
         return {
             ...defaultSettings,
-            ...settings
+            ...settings,
+            numOfBrowser: Math.min(settings.numOfBrowser || defaultSettings.numOfBrowser, systemLimit)
         }
     } else {
         return defaultSettings
     }
 }
 
-export function updateSettings(_:unknown, newSettings: Partial<Settings>): Settings {
-    const currentSettings = getSettings();
+export async function updateSettings(_:unknown, newSettings: Partial<Settings>): Promise<Settings> {
+    const currentSettings = await getSettings();
 
     // Filter out keys that don't exist in defaultSettings
     const filteredCurrentSettings = Object.keys(currentSettings).reduce((acc, key) => {

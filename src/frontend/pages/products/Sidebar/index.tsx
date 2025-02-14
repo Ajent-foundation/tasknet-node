@@ -127,7 +127,7 @@ export default function Product({
                         gap="8px"
                         width="100%"
                     >
-                        <Logo color="#000" width="150px" height="auto"/>
+                        <Logo color="#000" width="150px" height="45px"/>
                     </Box>
 
                     {/* Public Key */}
@@ -294,26 +294,28 @@ export default function Product({
                                 sx={{
                                     width: "100%",
                                     borderRadius: "6px",
-                                    border: "1px solid #ffcc00",
+                                    border: "1px solid #D92D20",
                                     padding: "4px 8px 4px 6px",
                                     boxSizing: "border-box",
-                                    background: "#fffae6",
+                                    background: "#fbeae9",
                                 }}
                             >
-                                <img src={"static://assets/warning-yellow.svg"} alt="database" width={"16px"} height={"16px"}/>
-                                <Typography
-                                    fontSize="14px"
-                                    fontWeight={500}
-                                    color="#ffcc00"
-                                    lineHeight={"20px"}
-                                    sx={{
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap"
-                                    }}
-                                >
-                                    {warning}
-                                </Typography>
+                                <img src={"static://assets/warning-yellow.svg"} alt="database" width={"16px"} height={"16px"} style={{color: "#D92D20"}}/>
+                                <Tooltip title={warning} arrow>
+                                    <Typography
+                                        fontSize="14px"
+                                        fontWeight={500}
+                                        color="#D92D20"
+                                        lineHeight={"20px"}
+                                        sx={{
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap"
+                                        }}
+                                    >
+                                        {warning}
+                                    </Typography>
+                                </Tooltip>
                             </Box>
                         }
 

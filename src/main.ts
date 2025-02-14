@@ -20,7 +20,7 @@ import {
     startMobileNode, killMobileNode, isMobileConnected
 } from './services';
 import { shell } from 'electron';
-
+import { getNodeLimit, getCurrentNumOfBrowsers } from './backend/handlers/system';
 
 import { init } from './backend/handlers/init';
 import { checkDocker } from './docker';
@@ -166,6 +166,8 @@ ipcMain.handle('get-points',async (_, clientId) => getPoints(clientId));
 ipcMain.handle('start-mobile-node', startMobileNode);
 ipcMain.handle('kill-mobile-node', killMobileNode);
 ipcMain.handle('is-mobile-connected', isMobileConnected);
+ipcMain.handle('get-current-num-of-browsers', getCurrentNumOfBrowsers);
+ipcMain.handle('met-my-node-limit', getNodeLimit);
 ipcMain.handle('open-external', async (_, url) => {
     await shell.openExternal(url);
 });

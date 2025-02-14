@@ -1,4 +1,6 @@
 import { Box, Typography, Tooltip } from "@mui/material";
+import CopyIcon from "@mui/icons-material/ContentCopy";
+import { useState } from "react";
 
 export interface IProps {
     isControllerRunning: boolean
@@ -8,6 +10,7 @@ export interface IProps {
     onShowLogs: (service: "proxy" | "controller" | "api" | "mobile-node") => void
     selectedService?: "proxy" | "controller" | "api" | "mobile-node"
     version: string | null
+    nodeId: string | null
 }
 
 export default function BottomBar({
@@ -17,9 +20,17 @@ export default function BottomBar({
     isMobileNodeRunning,
     onShowLogs,
     selectedService,
-    version
+    version,
+    nodeId
 }: IProps) : JSX.Element {
+    const [showCopied, setShowCopied] = useState(false);
     
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setShowCopied(true);
+        setTimeout(() => setShowCopied(false), 1500);
+    };
+
     const textSx = {
         color: "#51525B",
         fontWeight: "500",
@@ -36,8 +47,32 @@ export default function BottomBar({
             justifyContent="space-between"
         >
             {/* Left */}
-            <Box display="flex" gap={"24px"}>
+            <Box display="flex" gap={"8px"}>
                 <Typography sx={{...textSx, color: "#c8c8c8"}}>Version: {version}</Typography>
+                {
+                        nodeId &&
+                        <Box display="flex" gap={"8px"} alignItems="center">
+                            <Typography sx={{...textSx, color: "#c8c8c8"}}>NodeId: {nodeId}</Typography>
+                            <Tooltip 
+                                arrow 
+                                title={showCopied ? "Copied!" : "Copy to clipboard"}
+                                onClose={() => setShowCopied(false)}
+                            >
+                                <CopyIcon 
+                                    sx={{
+                                        cursor: "pointer", 
+                                        width: "10px", 
+                                        height: "10px",
+                                        transition: 'transform 0.2s',
+                                        '&:active': {
+                                            transform: 'scale(0.9)',
+                                        },
+                                    }} 
+                                    onClick={() => handleCopy(nodeId)}
+                                />
+                            </Tooltip>
+                        </Box>
+                    }
             </Box>
             
             {/* Right */}

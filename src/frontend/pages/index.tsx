@@ -62,7 +62,9 @@ export default function Page() : JSX.Element {
     const [myPoints, setMyPoints] = useState("Points: --");
     const [warning, setWarning] = useState<string | undefined>(undefined);
     const [clientId, setClientId] = useState<string | null>(null);
+    const [nodeId, setNodeId] = useState<string | null>(null);
     const [settings, setSettings] = useState<ISettings | null>(null);
+    const [updater, setUpdater] = useState(0);
     useEffect(() => {
         window.electronAPI.getSettings().then((settings) => {
             console.log("Settings", settings);
@@ -186,9 +188,14 @@ export default function Page() : JSX.Element {
         // Listen for socket status changes
         window.electronAPI.onSocketStatus((status: string, data: {clientId: string}) => {
             setIsConnected(status === 'connected');
+            setWarning(undefined);
             if(data && data.clientId) {
                 console.log("Client ID", data.clientId);
                 setClientId(data.clientId.split("::")[0]);
+                setNodeId(data.clientId.split("::")[1]);
+            }
+            if(status === 'error') {
+                setWarning("An error occurred while connecting to the server. Please check your connection and try again.");
             }
         });
     }, []);
@@ -215,7 +222,9 @@ export default function Page() : JSX.Element {
                 
                 const response = await window.electronAPI.connectSocket();
                 setIsConnected(status === 'connected');
+                setNumBrowsers(await window.electronAPI.getCurrentNumOfBrowsers());
             }
+            setUpdater(updater + 1);
         } catch (error) {
             console.error('Failed to toggle connection:', error);
         }
@@ -402,7 +411,6 @@ export default function Page() : JSX.Element {
                                     setIsAppleConnecting(false);
                                     setIsMobileConnecting(false);
                                     setIsConnecting(false);
-                                    setNumBrowsers(settings?.numOfBrowser || 0);
                                 }, 10000);
                             }).catch(error => {
                                 console.error('Failed to toggle Apple connections:', error);
@@ -485,9 +493,10 @@ export default function Page() : JSX.Element {
                                                 isOnBoarded={hasDocker} 
                                                 myNodeInfo={myNodeInfo}
                                                 browsersNum={numBrowsers}
+                                                updater={updater}
                                             /> 
                                             : 
-                                            view === "browser" ? 
+                                            view === "browser" ?
                                             <Browser 
                                                 onVncWindowClose={() => setVncWindowOpen(false)}
                                                 onVncWindowOpen={() => setVncWindowOpen(true)}
@@ -522,6 +531,7 @@ export default function Page() : JSX.Element {
                                 }}
                             >
                                 <BottomBar 
+                                    nodeId={nodeId}
                                     isControllerRunning={servicesStatus.find(service => service.service === "browsers-cmgr-ts")?.isRunning || false}
                                     isConnectedToServer={isConnected}
                                     isApiRunning={servicesStatus.find(service => service.service === "scraper-service-ts")?.isRunning || false}

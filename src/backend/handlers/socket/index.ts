@@ -18,7 +18,7 @@ export async function connectSocket(
     mainWindow: BrowserWindow
 ){
     const config = store.get('servicesConfig') as ServicesConfig;
-    const settings = getSettings();
+    const settings = await getSettings();
     
     // Kill all services
     try{
@@ -84,13 +84,15 @@ export async function connectSocket(
             const clientInfo = store.get('clientInfo');
             if(clientId && clientInfo) {  
                 if(globalState.socket){
+                    const fullReport = await getSystemReport();
+                    const browserNumDocker = fullReport.dockerContainers.filter(container => container.image === settings.browserImageName).length
                     globalState.socket.emit('register', { 
                         clientId,
                         clientInfo: clientInfo,
                         publicKey: config.publicKey,
                         version: app.getVersion(),
-                        fullReport: await getSystemReport(),
-                        numOfBrowsers: typeof settings.numOfBrowser === 'string' ? parseInt(settings.numOfBrowser) : settings.numOfBrowser
+                        fullReport: fullReport,
+                        numOfBrowsers: browserNumDocker
                     });
                 }
             } else {
@@ -99,20 +101,29 @@ export async function connectSocket(
         });
   
         globalState.socket.on('connect_error', (error) => {
-            console.error('Socket.IO connection error:', error);
-            mainWindow?.webContents.send('socket-status', 'error');
+            console.error('Socket.IO connection error: 1', {
+                error,
+                msg: error instanceof Error ? error.message : "Unknown error",
+                stack: error instanceof Error ? error.stack : "Unknown stack",
+            });
+            mainWindow?.webContents.send('socket-status', 'error', error instanceof Error ? error.message : "Unknown error");
         });
-  
+
         globalState.socket.on('disconnect', (reason) => {
             console.log('Socket disconnected:', reason);
-            mainWindow?.webContents.send('socket-status', 'disconnected');
+            mainWindow?.webContents.send('socket-status', 'disconnected', reason);
             if(globalState.isConnected){
                 globalState.socket?.connect();
             }
         });
 
-        globalState.socket.on("error", (error) => {
-            console.error('Socket.IO connection error:', error);
+        globalState.socket.on("error", (error, all) => {
+            console.error('Socket.IO connection error: 2', {
+                error,
+                msg: error instanceof Error ? error.message : "Unknown error",
+                stack: error instanceof Error ? error.stack : "Unknown stack",
+                all
+            });
         });
   
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
