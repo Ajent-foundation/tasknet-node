@@ -86,10 +86,11 @@ const config: ForgeConfig = {
     makers: [
         new MakerSquirrel({
             name: 'TaskNet',
-            iconUrl: './images/icon.ico',
-            setupIcon: './images/icon.ico',
-            certificateFile: "./certificates/cert.pfx",
-            certificatePassword: process.env.CERTIFICATE_PASSWORD
+            iconUrl: path.resolve(__dirname, 'images', 'icon.ico'),
+            setupIcon: path.resolve(__dirname, 'images', 'icon.ico'),
+            //certificateFile: "./certificates/cert.pfx",
+            //certificatePassword: process.env.CERTIFICATE_PASSWORD,
+            authors: 'Ajent Foundation',
         }, ['win32']), 
         new MakerZIP({}, 
             ['darwin', 'win32', 'linux']
