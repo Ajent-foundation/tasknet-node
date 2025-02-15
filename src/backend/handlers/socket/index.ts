@@ -1,7 +1,7 @@
 import { ServicesConfig } from "../../types";
 import { globalState } from "../../../main";
 import { store } from "../../../store";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, powerSaveBlocker } from "electron";
 import { io } from "socket.io-client";
 import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
@@ -13,6 +13,9 @@ const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
 
 // Add heartbeat interval
 let heartbeatInterval: NodeJS.Timeout;
+
+// Add power blocker ID tracking
+let powerBlockerId: number | null = null;
 
 export async function connectSocket(
     mainWindow: BrowserWindow
@@ -49,6 +52,13 @@ export async function connectSocket(
   
         globalState.socket.on('connect', async () => {
             console.log("Socket connected");
+            
+            // Prevent system sleep when connected
+            if (powerBlockerId === null) {
+                powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+                console.log('Power saver blocked to maintain connection');
+            }
+
             globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
 
@@ -111,6 +121,14 @@ export async function connectSocket(
 
         globalState.socket.on('disconnect', (reason) => {
             console.log('Socket disconnected______:', reason);
+            
+            // Release power blocker on disconnect
+            if (powerBlockerId !== null) {
+                powerSaveBlocker.stop(powerBlockerId);
+                powerBlockerId = null;
+                console.log('Power saver blocker released');
+            }
+
             mainWindow?.webContents.send('socket-status', 'disconnected', reason);
             if(globalState.isConnected){
                 globalState.socket?.connect();
@@ -294,6 +312,13 @@ export async function  disconnectSocket(){
     console.log("Disconnecting socket")
     globalState.isConnected = false;
     try {
+        // Release power blocker on manual disconnect
+        if (powerBlockerId !== null) {
+            powerSaveBlocker.stop(powerBlockerId);
+            powerBlockerId = null;
+            console.log('Power saver blocker released');
+        }
+
         stopServices();
         if (!globalState.socket) {
             return { status: 'already_disconnected' };
