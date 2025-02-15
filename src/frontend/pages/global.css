@@ -1,0 +1,21 @@
+/* Width and height of scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+/* Track (background of scrollbar) */
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Handle (draggable part) */
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+}

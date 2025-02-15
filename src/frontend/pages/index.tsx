@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ThemeOptions, ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, Typography } from "@mui/material";
 import { Settings as ISettings } from "../../store";
+import "./global.css";
 
 export const theme: ThemeOptions = createTheme({
     spacing: 1,
