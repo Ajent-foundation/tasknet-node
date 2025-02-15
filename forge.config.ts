@@ -26,7 +26,7 @@ const config: ForgeConfig = {
         asar: {
             unpack: "**/node_modules/{sharp,node-fetch,@img,libvips}/**/*"
         },
-        name: "Tasknet Node",
+        //name: "Tasknet Node",
         buildVersion: "1.0.0",
         extraResource: (() => {
             const resources: string[] = [
