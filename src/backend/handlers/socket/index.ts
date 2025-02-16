@@ -5,7 +5,7 @@ import { app, BrowserWindow, powerSaveBlocker } from "electron";
 import { io } from "socket.io-client";
 import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
-import { getSystemReport } from "../system";
+import { getDockerReport, getSystemReport } from "../system";
 import WebSocket from 'ws';
 
 const HEARTBEAT_INTERVAL = 5000;
@@ -16,6 +16,9 @@ let heartbeatInterval: NodeJS.Timeout;
 
 // Add power blocker ID tracking
 let powerBlockerId: number | null = null;
+
+// Add connection monitoring
+let connectionMonitorInterval: NodeJS.Timeout;
 
 export async function connectSocket(
     mainWindow: BrowserWindow
@@ -44,6 +47,8 @@ export async function connectSocket(
             reconnection: true,
             reconnectionAttempts: Infinity,
             reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,  // Prevent exponential backoff from getting too long
+            timeout: 10000,              // Connection timeout
             extraHeaders: {
                 'X-Api-Key-Id': settings.apiKeyId,
                 'X-Api-Key': settings.apiKey
@@ -62,10 +67,13 @@ export async function connectSocket(
             globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
 
+            const fullReport = await getDockerReport();
             // Start heartbeat after connection
             heartbeatInterval = setInterval(() => {
                 if (globalState.socket?.connected) {
-                    globalState.socket.emit('heartbeat');
+                    globalState.socket.emit('heartbeat', {
+                        fullReport: fullReport,
+                    });
                 }
             }, HEARTBEAT_INTERVAL);
 
@@ -108,6 +116,18 @@ export async function connectSocket(
             } else {
                 throw new Error("Client ID or client info not found");
             }
+
+            // Start connection monitor
+            if (connectionMonitorInterval) {
+                clearInterval(connectionMonitorInterval);
+            }
+            connectionMonitorInterval = setInterval(() => {
+                if (!globalState.socket?.connected && globalState.isConnected) {
+                    console.log('Connection monitor: Detected disconnected state, forcing reconnection');
+                    globalState.socket?.close();  // Force close the existing socket
+                    globalState.socket?.connect(); // Attempt immediate reconnection
+                }
+            }, 30000); // Check every 30 seconds
         });
   
         globalState.socket.on('connect_error', (error) => {
@@ -130,8 +150,19 @@ export async function connectSocket(
             }
 
             mainWindow?.webContents.send('socket-status', 'disconnected', reason);
-            if(globalState.isConnected){
-                globalState.socket?.connect();
+            
+            // Force immediate reconnection attempt for certain disconnect reasons
+            if (
+                reason === 'transport close' || 
+                reason === 'transport error' || 
+                reason === 'ping timeout'
+            ) {
+                console.log('Forcing immediate reconnection attempt');
+                setTimeout(() => {
+                    if (globalState.isConnected && !globalState.socket?.connected) {
+                        globalState.socket?.connect();
+                    }
+                }, 1000);
             }
         });
 
@@ -331,6 +362,11 @@ export async function  disconnectSocket(){
         globalState.socket.removeAllListeners('heartbeat');
         globalState.socket.disconnect();
         globalState.socket = null;
+
+        if (connectionMonitorInterval) {
+            clearInterval(connectionMonitorInterval);
+        }
+
         return { status: 'disconnected' };
     } catch (error) {
         console.error('Failed to disconnect:', error);
