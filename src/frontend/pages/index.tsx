@@ -149,6 +149,15 @@ export default function Page() : JSX.Element {
 
     // Init
     const [isLive, setIsLive] = useState(false);
+    useEffect(() => {
+        // Only if socket is connected
+        window.electronAPI.isConnected().then((isConnected) => {
+            if(isConnected) {
+                setIsLive(true);
+            }
+        });
+    }, []);
+    
     const [publicKey, setPublicKey] = useState<string | null>(null);
     const [privateKey, setPrivateKey] = useState<string | null>(null);
     const [version, setVersion] = useState<string | null>(null);
