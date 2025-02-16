@@ -11,10 +11,10 @@ export const plugins = [
                     ignore: ['index.html'],
                 }, 
             },
-            {
-                from: 'src/services/scraper-service-ts/src/Extract/Prompts',
-                to: path.resolve(__dirname, '.webpack/Prompts'), 
-            }
+            // {
+            //     from: 'src/services/scraper-service-ts/src/Extract/Prompts',
+            //     to: path.resolve(__dirname, '.webpack/Prompts'), 
+            // }
         ],
     }),
 ];

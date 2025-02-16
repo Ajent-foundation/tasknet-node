@@ -34,7 +34,7 @@ const config: ForgeConfig = {
                 path.resolve(__dirname, "images", "iconFilled.png"),
                 path.resolve(__dirname, "images", "iconWhite.png"),
                 path.resolve(__dirname, "images", "dmg-background.png"),
-                path.resolve(__dirname, "src/services/scraper-service-ts/src/Extract/Prompts/"),
+                //path.resolve(__dirname, "src/services/scraper-service-ts/src/Extract/Prompts/"),
             ];
 
             return resources;

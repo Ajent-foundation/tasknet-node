@@ -13,12 +13,18 @@
 
 ## 🚀 Features
 
+- Automated browser container management using Docker
+- Secure isolation of browser instances
+- Easy API key configuration
+- Lightweight and efficient resource management
+- Simple setup and installation process
+
 ## 🛠️ Installation
 
-
-## Prerequisites
-
-## 🔧 API Reference
+1. Install Docker
+2. Install TaskNet Node
+3. Configure API Keys
+4. Start the service
 
 ## 🤝 Contributing
 
@@ -32,5 +38,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Browser Container Manager](https://github.com/Ajent-foundation/browser-cmgr)
 - [Browser Node](https://github.com/Ajent-foundation/browser-node)
+
+## Prerequisites
+
+- Docker installed and running
+- Linux, MacOS, or Windows with WSL2
+- Node.js 16 or higher
 
 ---
