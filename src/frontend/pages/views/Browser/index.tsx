@@ -255,9 +255,40 @@ export default function View({
                                 height="100%"
                             >
                                 <Box>
-                                    <Typography variant="h6" gutterBottom sx={titleSx}>
-                                        Browser-{browser.ports.browser-10222}
-                                    </Typography>
+                                    <Box
+                                        display="flex"
+                                        justifyContent="space-between"
+                                    >
+                                        <Typography variant="h6" gutterBottom sx={titleSx}>
+                                            Browser-{browser.ports.browser-10222}
+                                        </Typography>
+                                        {
+                                            browser.leaseTime !== -1 &&
+                                            <Box
+                                                sx={{
+                                                    backgroundColor: '#FF0000',
+                                                    color: '#FFFFFF',
+                                                    height: '20px',
+                                                    padding: '0 8px',
+                                                    borderRadius: '4px',
+                                                    display: 'inline-block'
+                                                }}
+                                            >
+                                                <Typography 
+                                                    variant="body2" 
+                                                    gutterBottom 
+                                                    sx={{
+                                                        ...textSx,
+                                                        color: 'inherit',
+                                                        margin: 0
+                                                    }}
+                                                >
+                                                    Live
+                                                </Typography>
+                                            </Box>
+                                        }
+                                    </Box>
+
                                     <Divider sx={{ my: 1, borderColor: '#E4E4E7', marginBottom: "16px" }} />
                                     <Typography variant="body2" gutterBottom sx={textSx}>
                                         Last Used: {browser.lastUsed ? new Date(browser.lastUsed).toLocaleString() : 'Never'}
