@@ -30,6 +30,21 @@ export async function getSystemReport() {
     }
 }
 
+export async function getDockerReport() {
+    try {
+        const dockerInfo = await si.dockerInfo();
+        const dockerContainers = await si.dockerContainers(true);
+        
+        return {
+            dockerInfo,
+            dockerContainers
+        }
+    } catch (error) {
+        console.error('Error getting system report:', error);
+        return null
+    }
+}
+
 
 export async function getNodeLimit() {
     try {
