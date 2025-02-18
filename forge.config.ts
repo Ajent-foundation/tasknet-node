@@ -26,7 +26,6 @@ const config: ForgeConfig = {
         asar: {
             unpack: "**/node_modules/{sharp,node-fetch,@img,libvips}/**/*"
         },
-        //name: "Tasknet Node",
         buildVersion: "1.0.0",
         extraResource: (() => {
             const resources: string[] = [
@@ -103,7 +102,7 @@ const config: ForgeConfig = {
             }
         }, ['linux']), 
         new MakerDmg({
-            appPath: './out/Tasknet Node-darwin-arm64/Tasknet Node.app',
+            appPath: './out/tasknet-node-darwin-arm64/tasknet-node.app',
             background: './images/dmg-background.png',
             icon: './images/icon.icns',
             format: 'UDZO',
@@ -112,7 +111,7 @@ const config: ForgeConfig = {
                     x: 200,
                     y: 160,
                     type: 'file',
-                    path: './out/Tasknet Node-darwin-arm64/Tasknet Node.app'
+                    path: './out/tasknet-node-darwin-arm64/tasknet-node.app'
                 },
                 {
                     x: 400,

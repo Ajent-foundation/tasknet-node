@@ -23,6 +23,14 @@ let connectionMonitorInterval: NodeJS.Timeout;
 export async function connectSocket(
     mainWindow: BrowserWindow
 ){
+    // Clear existing intervals to prevent leaks from multiple connections
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+    }
+    if (connectionMonitorInterval) {
+        clearInterval(connectionMonitorInterval);
+    }
+
     const config = store.get('servicesConfig') as ServicesConfig;
     const settings = await getSettings();
     
@@ -77,6 +85,10 @@ export async function connectSocket(
                 }
             }, HEARTBEAT_INTERVAL);
 
+            // Remove any existing listeners before adding new ones to prevent duplicates
+            globalState.socket?.removeAllListeners('test-bandwidth');
+            globalState.socket?.removeAllListeners('bandwidth-download-test');
+
             // Handle bandwidth test requests
             globalState.socket.on('test-bandwidth', () => {
                 try {
@@ -118,9 +130,6 @@ export async function connectSocket(
             }
 
             // Start connection monitor
-            if (connectionMonitorInterval) {
-                clearInterval(connectionMonitorInterval);
-            }
             connectionMonitorInterval = setInterval(() => {
                 if (!globalState.socket?.connected && globalState.isConnected) {
                     console.log('Connection monitor: Detected disconnected state, forcing reconnection');
@@ -343,29 +352,31 @@ export async function  disconnectSocket(){
     console.log("Disconnecting socket")
     globalState.isConnected = false;
     try {
-        // Release power blocker on manual disconnect
+        // Clear all intervals
+        if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null; // Add null assignment
+        }
+        if (connectionMonitorInterval) {
+            clearInterval(connectionMonitorInterval);
+            connectionMonitorInterval = null; // Add null assignment
+        }
+
+        // Release power blocker
         if (powerBlockerId !== null) {
             powerSaveBlocker.stop(powerBlockerId);
             powerBlockerId = null;
-            console.log('Power saver blocker released');
         }
 
-        stopServices();
+        await stopServices(); // Add await
         if (!globalState.socket) {
             return { status: 'already_disconnected' };
         }
 
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-        }
-
-        globalState.socket.removeAllListeners('heartbeat');
+        // Remove all listeners before disconnecting
+        globalState.socket.removeAllListeners();
         globalState.socket.disconnect();
         globalState.socket = null;
-
-        if (connectionMonitorInterval) {
-            clearInterval(connectionMonitorInterval);
-        }
 
         return { status: 'disconnected' };
     } catch (error) {
