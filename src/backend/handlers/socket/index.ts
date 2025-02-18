@@ -7,9 +7,22 @@ import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
 import { getDockerReport, getSystemReport } from "../system";
 import WebSocket from 'ws';
+import axios from "axios";
 
 const HEARTBEAT_INTERVAL = 5000;
 const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
+
+// Add at the top of the file after imports
+const responseCache = new Map<string, {
+    response: {
+        status: number,
+        data: unknown,
+        headers: Record<string, string>
+    },
+    timestamp: number
+}>();
+
+const CACHE_DURATION = 60 * 1000; 
 
 // Add heartbeat interval
 let heartbeatInterval: NodeJS.Timeout;
@@ -150,6 +163,7 @@ export async function connectSocket(
 
         globalState.socket.on('disconnect', (reason) => {
             console.log('Socket disconnected______:', reason);
+            responseCache.clear();
             
             // Release power blocker on disconnect
             if (powerBlockerId !== null) {
@@ -193,46 +207,180 @@ export async function connectSocket(
         });
 
         // Add the proxy request handler here
-        globalState.socket.on('proxy-request', (message) => {
-            console.log("Proxy request received", message);
-            const { method, path, body, requestId } = message;
-            const options = {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body),
+        globalState.socket.on('proxy-request', async (message, ack ) => {
+            // Initialize tracking variables at the start
+            let retryCount = 0;
+            const maxRetries = 5;
+            let responseReceived = false;
+
+            // Acknowledge receipt immediately
+            if (ack) ack();
+
+            // Wait for socket connection
+            const waitForSocketConnection = async (timeoutMs = 5000): Promise<boolean> => {
+                if (globalState.socket?.connected) return true;
+                
+                return new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        if (globalState.socket?.connected) {
+                            clearInterval(checkInterval);
+                            clearTimeout(timeout);
+                            resolve(true);
+                        }
+                    }, 100);
+
+                    const timeout = setTimeout(() => {
+                        clearInterval(checkInterval);
+                        resolve(false);
+                    }, timeoutMs);
+                });
             };
 
-            fetch(`${settings.scraperServiceProtocol}://${settings.scraperServiceIpOrDomain}${settings.scraperServicePort !== "" ? `:${settings.scraperServicePort}` : ""}${path}`, options)
-                .then((response) => {
-                    const status = response.status;
-                    return response.json().then(data => ({
-                        status,
-                        data
-                    }));
-                })
-                .then(({ status, data }) => {
-                    globalState.socket.emit('proxy-response', {
-                        requestId,
-                        response: {
-                            status,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: data
-                        }
+            // Send proxy response
+            const sendProxyResponse = async (response: { status: number, data: unknown, headers: Record<string, string> }) => {
+                if (responseReceived) {
+                    return;
+                }
+                
+                const isConnected = await waitForSocketConnection();
+                if (!isConnected) {
+                    throw new Error("Socket connection failed");
+                }
+
+                try {
+                    // Cache all responses regardless of status
+                    responseCache.set(requestId, {
+                        response,
+                        timestamp: Date.now()
                     });
-                })
-                .catch((error) => {
-                    globalState.socket.emit('proxy-response', {
-                        requestId,
-                        response: {
-                            status: error.status || 500,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: {
-                                success: false,
-                                error: 'Unknown error occurred'
+
+                    // Set timeout to clear this specific cache entry after CACHE_DURATION
+                    setTimeout(() => {
+                        responseCache.delete(requestId);
+                    }, CACHE_DURATION);
+                    
+                    await new Promise((resolve, reject) => {
+                        globalState.socket?.emit('proxy-response', {
+                            requestId,
+                            response: {
+                                status: response.status,
+                                headers: response.headers,
+                                body: response.data
                             }
-                        }
+                        }, (acknowledgement:  { success: boolean, requestId: string, timestamp: number }) => {
+                            console.log("Server acknowledged proxy-response:", acknowledgement);
+                            responseReceived = true;
+                            resolve(acknowledgement);
+                        });
+
+                        setTimeout(() => reject(new Error('Acknowledgment timeout')), 10000);
                     });
-                });
+                } catch (error) {
+                    throw error;
+                }
+            };
+
+            // Make request
+            const makeRequest = async () => {
+                try {
+                    const response = await axios({
+                        method,
+                        url,
+                        data: body,
+                        headers: { 'Content-Type': 'application/json' },
+                        timeout: 30000,
+                        validateStatus: (_) => true,
+                    });
+
+                     // Convert headers to a simple Record<string, string>
+                    const normalizedHeaders = Object.entries(response.headers).reduce((acc, [key, value]) => {
+                        acc[key] = Array.isArray(value) ? value.join(', ') : String(value);
+                        return acc;
+                    }, {} as Record<string, string>);
+
+                    await sendProxyResponse({
+                        status: response.status,
+                        data: response.data,
+                        headers: normalizedHeaders
+                    });
+                    return true;
+                } catch (error) {
+                    if (axios.isAxiosError(error)) {
+                        await sendProxyResponse({
+                            status: 500,
+                            data: {
+                                success: false,
+                                error: 'Max retries reached'
+                            },
+                            headers: {}
+                        });
+                        return true;
+                    }
+                    throw error;
+                }
+            };
+
+            // Attempt request with retry   
+            const attemptRequestWithRetry = async () => {
+                while (retryCount < maxRetries && !responseReceived) {
+                    retryCount++;
+                    console.log(`Attempt ${retryCount}/${maxRetries}`);
+                    
+                    try {
+                        const success = await makeRequest();
+                        if (success) return;
+                    } catch (error) {
+                        if (retryCount === maxRetries) {
+                            await sendProxyResponse({
+                                status: 500,
+                                data: {
+                                    success: false,
+                                    error: 'Max retries reached'
+                                },
+                                headers: {}
+                            });
+                            return;
+                        }
+                        console.log(`Retrying in 5 seconds... (Attempt ${retryCount}/${maxRetries})`);
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    }
+                }
+            };
+
+            // Handle overall timeout
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => {
+                    reject(new Error('Overall timeout reached'));
+                }, 30000);
+            });
+            
+            // Check cache first
+            const { method, path, body, requestId } = message;
+            const cachedResponse = responseCache.get(requestId);
+            if (cachedResponse && (Date.now() - cachedResponse.timestamp) < CACHE_DURATION) {
+                await sendProxyResponse(cachedResponse.response);
+                return;
+            }
+
+            const url = `${settings.scraperServiceProtocol}://${settings.scraperServiceIpOrDomain}${settings.scraperServicePort !== "" ? `:${settings.scraperServicePort}` : ""}${path}`;
+
+            try {
+                await Promise.race([
+                    attemptRequestWithRetry(),
+                    timeoutPromise
+                ]);
+            } catch (error) {
+                if (!responseReceived) {
+                    await sendProxyResponse({
+                        status: 504,
+                        data: {
+                            success: false,
+                            error: 'Gateway Timeout - Request took too long to complete'
+                        },
+                        headers: {}
+                    });
+                }
+            }
         });
 
         // Handle WebSocket proxy routing
