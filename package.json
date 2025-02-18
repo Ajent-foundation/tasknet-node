@@ -9,9 +9,9 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "minor": "npm version minor && npm run package && npm run make",
-    "patch": "npm version patch && npm run package && npm run make",
-    "major": "npm version major && npm run package && npm run make",
+    "minor": "npm version minor",
+    "patch": "npm version patch",
+    "major": "npm version major",
     "rebuild": "electron-rebuild -f -w sharp",
     "lint": "eslint --ext .ts,.tsx ."
   },
