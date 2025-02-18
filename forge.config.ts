@@ -102,7 +102,9 @@ const config: ForgeConfig = {
             }
         }, ['linux']), 
         new MakerDmg({
-            appPath: './out/tasknet-node-darwin-arm64/tasknet-node.app',
+            appPath: (process.platform === 'darwin' && process.arch === 'arm64') 
+                ? './out/tasknet-node-darwin-arm64/tasknet-node.app'
+                : './out/tasknet-node-darwin-x64/tasknet-node.app',
             background: './images/dmg-background.png',
             icon: './images/icon.icns',
             format: 'UDZO',
@@ -111,7 +113,9 @@ const config: ForgeConfig = {
                     x: 200,
                     y: 160,
                     type: 'file',
-                    path: './out/tasknet-node-darwin-arm64/tasknet-node.app'
+                    path: (process.platform === 'darwin' && process.arch === 'arm64')
+                        ? './out/tasknet-node-darwin-arm64/tasknet-node.app'
+                        : './out/tasknet-node-darwin-x64/tasknet-node.app'
                 },
                 {
                     x: 400,
