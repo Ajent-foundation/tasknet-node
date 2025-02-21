@@ -4,7 +4,7 @@ import { createWindow, createTray } from './backend/app';
 import path from 'path';
 import { 
     deleteStoredClient, getStoredClient, 
-    getSystemInfo, storeClientInfo 
+    getSystemInfo, storeClientInfo, getCachedClientId, cacheClientId
 } from './backend/handlers/store';
 import { 
     readServiceLogs
@@ -51,7 +51,7 @@ if (require('electron-squirrel-startup')) {
 }
 
 import { autoUpdater } from 'electron-updater';
-import { baseURL } from './services/scraper-service-ts/src/apis/maaas/requests/base';
+//import { baseURL } from './services/scraper-service-ts/src/apis/maaas/requests/base';
 const logFile = path.join(app.getPath('userData'), 'crash.log');
 
 app.whenReady().then(async () => {
@@ -171,3 +171,5 @@ ipcMain.handle('met-my-node-limit', getNodeLimit);
 ipcMain.handle('open-external', async (_, url) => {
     await shell.openExternal(url);
 });
+ipcMain.handle('get-cached-client-id', getCachedClientId);
+ipcMain.handle('cache-client-id', (_, clientId) => cacheClientId(clientId));

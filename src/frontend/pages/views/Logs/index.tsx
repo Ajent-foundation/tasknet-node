@@ -5,13 +5,13 @@ import Convert from 'ansi-to-html';
 export default function View({
     serviceName
 }: {
-    serviceName: "proxy" | "controller" | "api" | "mobile-node"
+    serviceName: "server" | "controller" | "api" | "mobile-node"
 }) : JSX.Element {
     const [logs, setLogs] = useState('');
     const converter = new Convert();
     const serviceIdentifier = 
-        serviceName === "proxy" ? 
-            "proxy-service-ts" 
+        serviceName === "server" ? 
+            "socket-service" 
             : serviceName === "controller" ? 
                 "browsers-service-poc" 
                 : serviceName === "mobile-node" ?

@@ -7,8 +7,8 @@ export interface IProps {
     isApiRunning: boolean
     isConnectedToServer: boolean
     isMobileNodeRunning: boolean
-    onShowLogs: (service: "proxy" | "controller" | "api" | "mobile-node") => void
-    selectedService?: "proxy" | "controller" | "api" | "mobile-node"
+    onShowLogs: (service: "server" | "controller" | "api" | "mobile-node") => void
+    selectedService?: "server" | "controller" | "api" | "mobile-node"
     version: string | null
     nodeId: string | null
 }
@@ -88,10 +88,10 @@ export default function BottomBar({
                         '&:hover': {
                             backgroundColor: 'rgba(0, 0, 0, 0.04)'
                         },
-                        //cursor: "pointer",
-                        backgroundColor: selectedService === "proxy" ? "rgba(0, 0, 0, 0.04)" : "transparent"
+                        cursor: "pointer",
+                        backgroundColor: selectedService === "server" ? "rgba(0, 0, 0, 0.04)" : "transparent"
                     }}
-                    //onClick={() => isConnectedToServer ? onShowLogs("proxy") : {}}
+                    onClick={() => isConnectedToServer ? onShowLogs("server") : {}}
                 >
                     <Tooltip arrow title={isConnectedToServer ? "Connected to proxy server" : "Disconnected from proxy server"}>
                         <Box

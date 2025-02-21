@@ -29,6 +29,8 @@ declare global {
             openExternal: (url: string) => Promise<void>;
             getNodeLimit: () => Promise<number>;
             getCurrentNumOfBrowsers: () => Promise<number>;
+            getCachedClientId: () => Promise<string>;
+            cacheClientId: (clientId: string) => Promise<void>;
             platform: string;
         }
     }

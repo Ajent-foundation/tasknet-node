@@ -58,7 +58,7 @@ export default function Page() : JSX.Element {
     const [vncWindowOpen, setVncWindowOpen] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isMobileConnecting, setIsMobileConnecting] = useState(false);
-    const [logService, setLogService] = useState<"proxy" | "controller" | "api" | "mobile-node" | null>(null);
+    const [logService, setLogService] = useState<"server" | "controller" | "api" | "mobile-node" | null>(null);
     const [hasDocker, setHasDocker] = useState(false);
     const [myPoints, setMyPoints] = useState("Points: --");
     const [warning, setWarning] = useState<string | undefined>(undefined);
@@ -67,6 +67,11 @@ export default function Page() : JSX.Element {
     const [settings, setSettings] = useState<ISettings | null>(null);
     const [updater, setUpdater] = useState(0);
     useEffect(() => {
+        // Load cached clientId
+        window.electronAPI.getCachedClientId().then((clientId) => {
+            if(clientId) setClientId(clientId);
+        });
+
         window.electronAPI.getSettings().then((settings) => {
             console.log("Settings", settings);
             setSettings(settings);
@@ -77,11 +82,11 @@ export default function Page() : JSX.Element {
     useEffect(() => {
         const updatePoints = async () => {
             window.electronAPI.getPoints(clientId).then((points) => {
-                console.log("Points", points);
+                console.log("Points from", clientId);
                 if(!points || points.points === -1) {
                     setMyPoints("Points: --");
                 } else {
-                    setMyPoints(`Points: ${points.points.toLocaleString()}`);
+                    setMyPoints(`Points: ${points.points.toFixed(2)}`);
                 }
             });
         };
@@ -203,6 +208,9 @@ export default function Page() : JSX.Element {
                 console.log("Client ID", data.clientId);
                 setClientId(data.clientId.split("::")[0]);
                 setNodeId(data.clientId.split("::")[1]);
+
+                // Cache clientId
+                window.electronAPI.cacheClientId(data.clientId.split("::")[0]);
             }
             if(status === 'error') {
                 setWarning("An error occurred while connecting to the server. Please check your connection and try again.");
@@ -527,7 +535,7 @@ export default function Page() : JSX.Element {
                                                 />
                                                 :
                                                 <Logs 
-                                                    serviceName={logService ?? "proxy"} 
+                                                    serviceName={logService ?? "server"} 
                                                 />
                                     }
                                 </Box>
@@ -546,7 +554,7 @@ export default function Page() : JSX.Element {
                                     isConnectedToServer={isConnected}
                                     isApiRunning={servicesStatus.find(service => service.service === "scraper-service-ts")?.isRunning || false}
                                     isMobileNodeRunning={false}//{isMobileConnected}
-                                    onShowLogs={(service: "proxy" | "controller" | "api" | "mobile-node") => {
+                                    onShowLogs={(service: "server" | "controller" | "api" | "mobile-node") => {
                                         setLogService(service)
                                         setView("logs")
                                         setSelectedView(items.find(item => item.id === "logs") || defaultSelectedView)

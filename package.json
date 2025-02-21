@@ -98,6 +98,7 @@
     "node-fetch": "^3.3.2",
     "openai": "^4.76.0",
     "os": "^0.1.2",
+    "pino": "^9.6.0",
     "pixelmatch": "^6.0.0",
     "puppeteer": "^20.9.0",
     "puppeteer-core": "^5.5.0",

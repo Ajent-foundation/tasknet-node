@@ -469,7 +469,7 @@ export default function View({
                     ...paperSx, 
                     flexGrow: 1,
                     height: 'auto',
-                    maxHeight: "calc(100vh - 480px)",
+                    maxHeight: "calc(100vh - 520px)",
                     minHeight: "310px",
                     padding: 0,
                     display: 'flex',

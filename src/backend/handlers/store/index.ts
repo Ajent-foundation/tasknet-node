@@ -41,3 +41,11 @@ export function deleteStoredClient() {
     store.delete('clientId');
     store.delete('clientInfo');
 }
+
+export function getCachedClientId() {
+    return store.get('actual_clientId');
+}
+
+export function cacheClientId(clientId: string) {
+    store.set('actual_clientId', clientId);
+}

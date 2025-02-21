@@ -8,9 +8,32 @@ import { stopServices, runServices } from "../../../services";
 import { getDockerReport, getSystemReport } from "../system";
 import WebSocket from 'ws';
 import axios from "axios";
+import path from "path";
+import { pino } from 'pino'
 
 const HEARTBEAT_INTERVAL = 5000;
 const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
+
+const BASE_LOGS_PATH = app.isPackaged 
+    ? path.join(app.getPath('userData'), 'logs')
+    : __dirname;
+
+const POC_LOG_FILE = path.join(BASE_LOGS_PATH, "socket-service-out.log")
+
+
+const Logger = pino({
+    level: 'info',
+}, pino.multistream([
+    { stream: process.stdout },
+    ...(POC_LOG_FILE ? [
+        { stream: pino.destination({
+            dest: POC_LOG_FILE,
+            sync: false,  // Set to true if you need synchronous writes
+            mkdir: true   // Create directory if it doesn't exist
+        })}
+    ] : [])
+]))
+
 
 // Add at the top of the file after imports
 const responseCache = new Map<string, {
@@ -36,6 +59,7 @@ let connectionMonitorInterval: NodeJS.Timeout;
 export async function connectSocket(
     mainWindow: BrowserWindow
 ){
+    Logger.info('Attempting to connect socket');
     // Clear existing intervals to prevent leaks from multiple connections
     if (heartbeatInterval) {
         clearInterval(heartbeatInterval);
@@ -51,16 +75,17 @@ export async function connectSocket(
     try{
         await stopServices();
     } catch(e){
-        console.log(e)
     }
 
     try {
         await runServices();
         if(settings.dontConnectOnGoLive){
+            Logger.info('Not connecting due to dontConnectOnGoLive setting');
             return { status: 'not_connecting' };
         }
 
         if (globalState.socket?.connected) {
+            Logger.info('Socket already connected');
             return { status: 'already_connected' };
         }
 
@@ -76,13 +101,11 @@ export async function connectSocket(
             }
         });
   
-        globalState.socket.on('connect', async () => {
-            console.log("Socket connected");
-            
+        globalState.socket.on('connect', async () => {            
+            Logger.info('Socket connected successfully');
             // Prevent system sleep when connected
             if (powerBlockerId === null) {
                 powerBlockerId = powerSaveBlocker.start('prevent-app-suspension');
-                console.log('Power saver blocked to maintain connection');
             }
 
             globalState.isConnected = true;
@@ -127,6 +150,7 @@ export async function connectSocket(
             const clientInfo = store.get('clientInfo');
             if(clientId && clientInfo) {  
                 if(globalState.socket){
+                    Logger.debug({ msg: 'Registering client' });
                     const fullReport = await getSystemReport();
                     const browserNumDocker = fullReport.dockerContainers.filter(container => container.image === settings.browserImageName).length
                     globalState.socket.emit('register', { 
@@ -145,31 +169,29 @@ export async function connectSocket(
             // Start connection monitor
             connectionMonitorInterval = setInterval(() => {
                 if (!globalState.socket?.connected && globalState.isConnected) {
-                    console.log('Connection monitor: Detected disconnected state, forcing reconnection');
                     globalState.socket?.close();  // Force close the existing socket
                     globalState.socket?.connect(); // Attempt immediate reconnection
                 }
-            }, 30000); // Check every 30 seconds
+            }, 5000); // Check every 30 seconds
         });
   
         globalState.socket.on('connect_error', (error) => {
-            console.error('Socket.IO connection error: 1', {
-                error,
-                msg: error instanceof Error ? error.message : "Unknown error",
-                stack: error instanceof Error ? error.stack : "Unknown stack",
+            Logger.error({
+                msg: 'Socket.IO connection error',
+                error: error instanceof Error ? error.message : "Unknown error",
+                stack: error instanceof Error ? error.stack : "Unknown stack"
             });
             mainWindow?.webContents.send('socket-status', 'error', error instanceof Error ? error.message : "Unknown error");
         });
 
         globalState.socket.on('disconnect', (reason) => {
-            console.log('Socket disconnected______:', reason);
+            Logger.info({ msg: 'Socket disconnected', reason });
             responseCache.clear();
             
             // Release power blocker on disconnect
             if (powerBlockerId !== null) {
                 powerSaveBlocker.stop(powerBlockerId);
                 powerBlockerId = null;
-                console.log('Power saver blocker released');
             }
 
             mainWindow?.webContents.send('socket-status', 'disconnected', reason);
@@ -180,9 +202,9 @@ export async function connectSocket(
                 reason === 'transport error' || 
                 reason === 'ping timeout'
             ) {
-                console.log('Forcing immediate reconnection attempt');
                 setTimeout(() => {
                     if (globalState.isConnected && !globalState.socket?.connected) {
+                        Logger.debug({ msg: 'Socket reconnecting' });
                         globalState.socket?.connect();
                     }
                 }, 1000);
@@ -190,15 +212,16 @@ export async function connectSocket(
         });
 
         globalState.socket.on("error", (error, all) => {
-            console.error('Socket.IO connection error: 2', {
-                error,
-                msg: error instanceof Error ? error.message : "Unknown error",
+            Logger.error({
+                msg: 'Socket.IO error',
+                error: error instanceof Error ? error.message : "Unknown error",
                 stack: error instanceof Error ? error.stack : "Unknown stack",
                 all
             });
         });
   
         globalState.socket.on('reconnect_attempt', (attemptNumber) => {
+            Logger.debug({ msg: 'Socket reconnect attempt', attemptNumber });
             mainWindow?.webContents.send('socket-status', `reconnecting:${attemptNumber}`);
         });
 
@@ -208,6 +231,7 @@ export async function connectSocket(
 
         // Add the proxy request handler here
         globalState.socket.on('proxy-request', async (message, ack ) => {
+            Logger.debug({ msg: 'Received proxy request', requestId: message.requestId, path: message.path });
             // Initialize tracking variables at the start
             let retryCount = 0;
             const maxRetries = 5;
@@ -268,7 +292,6 @@ export async function connectSocket(
                                 body: response.data
                             }
                         }, (acknowledgement:  { success: boolean, requestId: string, timestamp: number }) => {
-                            console.log("Server acknowledged proxy-response:", acknowledgement);
                             responseReceived = true;
                             resolve(acknowledgement);
                         });
@@ -324,7 +347,6 @@ export async function connectSocket(
             const attemptRequestWithRetry = async () => {
                 while (retryCount < maxRetries && !responseReceived) {
                     retryCount++;
-                    console.log(`Attempt ${retryCount}/${maxRetries}`);
                     
                     try {
                         const success = await makeRequest();
@@ -341,7 +363,6 @@ export async function connectSocket(
                             });
                             return;
                         }
-                        console.log(`Retrying in 5 seconds... (Attempt ${retryCount}/${maxRetries})`);
                         await new Promise(resolve => setTimeout(resolve, 5000));
                     }
                 }
@@ -385,6 +406,7 @@ export async function connectSocket(
 
         // Handle WebSocket proxy routing
         globalState.socket.on('proxy-ws-connect', async (message) => {
+            Logger.debug({ msg: 'WebSocket proxy connect request', requestId: message.requestId });
             const { path, requestId } = message;
             let localWs: WebSocket | null = null;
             
@@ -408,7 +430,6 @@ export async function connectSocket(
 
                 localWs.on('open', () => {
                     clearTimeout(connectionTimeout);
-                    console.log(`Local WebSocket connected for ${path}`);
 
                     // Process any buffered messages
                     while (messageBuffer.length > 0) {
@@ -450,13 +471,11 @@ export async function connectSocket(
                     };
 
                     localWs.on('close', (code, reason) => {
-                        console.log(`WebSocket closed - Code: ${code}, Reason: ${reason}`);
                         globalState.socket?.emit(`proxy-ws-close:${requestId}`);
                         cleanup();
                     });
 
                     localWs.on('error', (error) => {
-                        console.error('WebSocket error:', error.message);
                         globalState.socket?.emit(`proxy-ws-error:${requestId}`, { error: error.message });
                         cleanup();
                     });
@@ -483,6 +502,7 @@ export async function connectSocket(
 
         // Handle WebSocket disconnect request
         globalState.socket.on('proxy-ws-disconnect', (message) => {
+            Logger.debug({ msg: 'WebSocket disconnect request', requestId: message.requestId });
             const { requestId } = message;
             globalState.socket?.off(`proxy-ws-message:${requestId}`);
         });
@@ -491,13 +511,16 @@ export async function connectSocket(
             status: 'connected'
         };
     } catch (error) {
-        console.error('Failed to connect:', error);
-        return { status: 'error', error: error.message };
+        Logger.error({
+            msg: 'Failed to connect socket',
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
+        return { status: 'error', error: error instanceof Error ? error.message : String(error) };
     }
 }
   
 export async function  disconnectSocket(){
-    console.log("Disconnecting socket")
+    Logger.info('Attempting to disconnect socket');
     globalState.isConnected = false;
     try {
         // Clear all intervals
@@ -526,10 +549,14 @@ export async function  disconnectSocket(){
         globalState.socket.disconnect();
         globalState.socket = null;
 
+        Logger.info('Socket disconnected successfully');
         return { status: 'disconnected' };
     } catch (error) {
-        console.error('Failed to disconnect:', error);
-        return { status: 'error', error: error.message };
+        Logger.error({
+            msg: 'Failed to disconnect socket',
+            error: error instanceof Error ? error.message : "Unknown error"
+        });
+        return { status: 'error', error: error instanceof Error ? error.message : String(error) };
     }
 }
 
