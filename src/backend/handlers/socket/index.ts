@@ -10,6 +10,7 @@ import WebSocket from 'ws';
 import axios from "axios";
 import path from "path";
 import { pino } from 'pino'
+import { getDockerContainersCountByImageName } from "../../../docker";
 
 const HEARTBEAT_INTERVAL = 5000;
 const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
@@ -98,7 +99,8 @@ export async function connectSocket(
             extraHeaders: {
                 'X-Api-Key-Id': settings.apiKeyId,
                 'X-Api-Key': settings.apiKey
-            }
+            },
+            transports: ['websocket']
         });
   
         globalState.socket.on('connect', async () => {            
@@ -152,7 +154,8 @@ export async function connectSocket(
                 if(globalState.socket){
                     Logger.debug({ msg: 'Registering client' });
                     const fullReport = await getSystemReport();
-                    const browserNumDocker = fullReport.dockerContainers.filter(container => container.image === settings.browserImageName).length
+                    
+                    const browserNumDocker = await getDockerContainersCountByImageName(settings.browserImageName)
                     globalState.socket.emit('register', { 
                         clientId,
                         clientInfo: clientInfo,

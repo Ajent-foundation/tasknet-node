@@ -1,5 +1,7 @@
 import si from "systeminformation"
 import { getSettings } from "../settings";
+import { getDockerContainersCountByImageName } from "../../../docker";
+
 export async function getSystemReport() {
     try {
         // Collect system information, cpu, memory, disk, network, etc.
@@ -69,8 +71,7 @@ export async function getNodeLimit() {
 export async function getCurrentNumOfBrowsers() {
     try {
         const settings = await getSettings();
-        const dockerContainers = await si.dockerContainers(true);
-        return dockerContainers.filter(container => container.image === settings.browserImageName).length;
+        return await getDockerContainersCountByImageName(settings.browserImageName);
     } catch (error) {
         console.error('Error getting current number of browsers:', error);
         return 0;

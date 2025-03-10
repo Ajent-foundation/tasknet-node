@@ -230,6 +230,13 @@ export async function checkDocker(): Promise<boolean> {
     });
 }
 
+export async function getDockerContainersCountByImageName(imageName: string): Promise<number> {
+  const { stdout, stderr }: ExecResult = await execPromise(
+    `${dockerPath || "docker"} ps -a --format "{{.Image}}" | grep "${imageName}" | wc -l`
+  );
+  return parseInt(stdout.trim());
+}
+
 export async function setDockerPath(path: string): Promise<boolean> {
     if (!fs.existsSync(path)) {
         logToFile(`Docker executable not found at path: ${path}`);
