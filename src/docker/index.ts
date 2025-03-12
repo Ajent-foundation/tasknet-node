@@ -231,12 +231,23 @@ export async function checkDocker(): Promise<boolean> {
 }
 
 export async function getDockerContainersCountByImageName(imageName: string): Promise<number> {
-  const { stdout, stderr }: ExecResult = await execPromise(
-    `${dockerPath || "docker"} ps -a --format "{{.Image}}" | grep "${imageName}" | wc -l`
-  );
-  return parseInt(stdout.trim());
-}
+  try {
+    // Use docker's built-in filtering instead of grep
+    const { stdout, stderr }: ExecResult = await execPromise(
+      `${dockerPath || "docker"} ps -a --filter "ancestor=${imageName}" --format "{{.Image}}"`
+    );
 
+    if (stderr) {
+      logToFile(`Warning getting container count: ${stderr}`);
+    }
+
+    // Count the lines in the output
+    return stdout.trim().split('\n').filter(line => line.length > 0).length;
+  } catch (error) {
+    logToFile(`Error getting container count: ${(error as Error).message}`);
+    return 0;
+  }
+}
 export async function setDockerPath(path: string): Promise<boolean> {
     if (!fs.existsSync(path)) {
         logToFile(`Docker executable not found at path: ${path}`);
