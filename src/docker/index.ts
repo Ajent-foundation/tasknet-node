@@ -114,13 +114,20 @@ async function streamMobileDockerImageLogs(): Promise<void> {
   }
 }
 
+// Add this helper function
+function quoteDockerPath(path: string | null): string {
+    const dockerCommand = path || "docker";
+    // Only quote if the path contains spaces
+    return dockerCommand.includes(' ') ? `"${dockerCommand}"` : dockerCommand;
+}
+
 export async function runMobileDockerContainer(apiKey: string): Promise<boolean> {
   logToFile("Attempting to run maaas node image");
   restartAdbServer();
 
   const nodeUUID: string = uuidv4();
 
-  const command = `${dockerPath || "docker"} run -d --rm \
+  const command = `${quoteDockerPath(dockerPath)} run -d --rm \
     --name ${MOBILE_NODE_CONTAINER_NAME} \
     --env "ANDROID_ADB_SERVER_ADDRESS=host.docker.internal" \
     --add-host=host.docker.internal:host-gateway \
@@ -162,7 +169,7 @@ export async function runMobileDockerContainer(apiKey: string): Promise<boolean>
 export async function pullMobileDockerImage(): Promise<void> {
   logToFile("Pulling maaas node image");
 
-  const command = `${dockerPath || "docker"} pull ${MOBILE_NODE_IMAGE_NAME}`;
+  const command = `${quoteDockerPath(dockerPath)} pull ${MOBILE_NODE_IMAGE_NAME}`;
   const [cmd, ...args] = command.split(' ');
 
   return new Promise((resolve, reject) => {
@@ -192,7 +199,7 @@ export async function pullMobileDockerImage(): Promise<void> {
 export async function killMobileDockerContainer(): Promise<void> {
   try {
     const { stdout, stderr }: ExecResult = await execPromise(
-      `${dockerPath || "docker"} stop ${MOBILE_NODE_CONTAINER_NAME}`
+      `${quoteDockerPath(dockerPath)} stop ${MOBILE_NODE_CONTAINER_NAME}`
     );
     if (stderr) {
       logToFile(`Warning while stopping container: ${stderr}`);
@@ -202,7 +209,7 @@ export async function killMobileDockerContainer(): Promise<void> {
     }
 
     const { stdout: rmStdout, stderr: rmStderr }: ExecResult =
-      await execPromise(`${dockerPath || "docker"} rm ${MOBILE_NODE_CONTAINER_NAME}`);
+      await execPromise(`${quoteDockerPath(dockerPath)} rm ${MOBILE_NODE_CONTAINER_NAME}`);
     if (rmStderr) {
       logToFile(`Warning while removing container: ${rmStderr}`);
     }
@@ -234,7 +241,7 @@ export async function getDockerContainersCountByImageName(imageName: string): Pr
   try {
     // Use docker's built-in filtering instead of grep
     const { stdout, stderr }: ExecResult = await execPromise(
-      `${dockerPath || "docker"} ps -a --filter "ancestor=${imageName}" --format "{{.Image}}"`
+      `${quoteDockerPath(dockerPath)} ps -a --filter "ancestor=${imageName}" --format "{{.Image}}"`
     );
 
     if (stderr) {
