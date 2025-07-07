@@ -1,4 +1,4 @@
-import { Box, Button, Paper, Typography, TextField, Tooltip, IconButton, Slider, Select, MenuItem, Checkbox, FormControlLabel, Switch } from "@mui/material";
+import { Box, Button, Paper, Typography, TextField, Tooltip, IconButton, Slider, Select, MenuItem, Checkbox, FormControlLabel, Switch, Divider } from "@mui/material";
 import { useState, useEffect, useMemo } from "react";
 import { Visibility, VisibilityOff, InfoOutlined } from "@mui/icons-material";
 
@@ -6,7 +6,7 @@ export interface IFormField {
     id: string,
     label: string,
     value: string,
-    type: "text" | "password" | "slider" | "toggle" | "checkbox" | "select" | "map" ,
+    type: "text" | "password" | "slider" | "toggle" | "checkbox" | "select" | "map" | "divider" | "label",
     validate?: (value: unknown) => boolean,
     isReadOnly?: boolean,
     options?: Array<{label: string, value: string}>, // For select type
@@ -15,6 +15,10 @@ export interface IFormField {
     step?: number, // For slider type
     mapFields?: Record<string, string>, // For map type - predefined keys and their values
     hint?: string, // For hover tooltip
+    variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2", // For label type
+    color?: string, // For label type
+    dividerVariant?: "fullWidth" | "inset" | "middle", // For divider type
+    dividerColor?: string, // For divider type
 }
 
 export interface IProps {
@@ -244,6 +248,19 @@ export default function Component({ title, showSaveButton = false, onSave, onSav
                                                 values={values[field.id] as Record<string, string> || {}}
                                                 onChange={(value) => handleChange(field.id, value)}
                                                 hint={field.hint}
+                                            />;
+                                        case "divider":
+                                            return <DividerField
+                                                key={colIndex}
+                                                variant={field.dividerVariant}
+                                                color={field.dividerColor}
+                                            />;
+                                        case "label":
+                                            return <LabelField
+                                                key={colIndex}
+                                                label={field.label}
+                                                variant={field.variant}
+                                                color={field.color}
                                             />;
                                         // Add other cases for toggle, checkbox, select
                                     }
@@ -502,6 +519,44 @@ const ToggleField = ({ label, value, onChange }: {
                     />
                 }
                 label={<Typography sx={labelSx}>{label}</Typography>}
+            />
+        </Box>
+    );
+};
+
+const LabelField = ({ label, variant = "h6", color = "#1A1A1E" }: {
+    label: string,
+    variant?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "subtitle1" | "subtitle2" | "body1" | "body2",
+    color?: string
+}) => {
+    return (
+        <Box sx={{ mb: 2 }}>
+            <Typography 
+                variant={variant} 
+                sx={{ 
+                    color,
+                    fontWeight: 600,
+                    lineHeight: "24px",
+                }}
+            >
+                {label}
+            </Typography>
+        </Box>
+    );
+};
+
+const DividerField = ({ variant = "fullWidth", color = "#E4E4E7" }: {
+    variant?: "fullWidth" | "inset" | "middle",
+    color?: string
+}) => {
+    return (
+        <Box sx={{ my: 2 }}>
+            <Divider 
+                variant={variant}
+                sx={{ 
+                    borderColor: color,
+                    width: "100%"
+                }}
             />
         </Box>
     );

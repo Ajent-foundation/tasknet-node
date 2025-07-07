@@ -26,7 +26,7 @@ import { init } from './backend/handlers/init';
 import { checkDocker } from './docker';
 import { stopBrowserManager as gracefulShutdownPOC} from './services/browser-cmgr';
 import { stopScraper as gracefulShutdownScraper} from './services/scraper-service';
-import { getSettings, updateSettings } from './backend/handlers/settings';
+import { getSettings, updateSettings, initializeSettings } from './backend/handlers/settings';
 import fs from 'fs';
 import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
 updateElectronApp({
@@ -60,6 +60,10 @@ app.whenReady().then(async () => {
         const filePath = path.join(app.getAppPath(), '.webpack/renderer', fileUrl);
         callback(filePath);
     });
+    
+    // Initialize and validate settings on app start
+    await initializeSettings();
+    
     globalState.mainWindow = createWindow();
     globalState.tray = createTray(globalState.mainWindow, (newWindow) => {
         globalState.mainWindow = newWindow;

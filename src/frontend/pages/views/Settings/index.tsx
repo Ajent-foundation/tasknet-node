@@ -76,7 +76,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                 flexGrow: 1,
                 paddingRight: '16px',
                 overflow: 'auto',
-                height: '700px'
+                minHeight: '700px'
             }}
         >
             <Alert severity="info" sx={{ mb: 1 }}>
@@ -93,15 +93,30 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                 </span>
             </Alert>
 
-            <Alert severity="warning" sx={{ mb: 1 }}>
-                You must obtain a new API key from the Task Net dashboard to be able to go live
-            </Alert>
+            {
+                // Only show this alert if the api key is not set
+                (!settings.apiKey || !settings.apiKeyId) &&
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                    You must obtain a new API key from the Task Net dashboard to be able to go live
+                </Alert>
+            }
 
             {
                 settings &&
                 <Section 
                     title="Node" 
                     fields={[
+                        // Tasknet APi Server
+                        [
+                            {
+                                id: "label",
+                                label: "API Server",
+                                type: "label",
+                                variant: "body1",
+                                color: "#1A1A1E",
+                                value: "API Server"
+                            },
+                        ],
                         [
                             {
                                 id: "nodeProtocol",
@@ -131,7 +146,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                                 isReadOnly: true,
                                 value: settings.serverIpOrDomain,
                                 type: "text",
-                                hint: "The URL where your node server is running (e.g., localhost)"
+                                hint: "The URL where your api server is running (e.g., localhost)"
                             },
                             {
                                 id: "serverPort",
@@ -139,8 +154,174 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                                 isReadOnly: true,
                                 value: settings.serverPort,
                                 type: "text",
-                                hint: "The port where your node server is running (e.g., 3000)"
+                                hint: "The port where your api server is running (e.g., 3000)"
+                            }
+                        ],
+                        [
+                            {
+                                id: "divider",
+                                type: "divider",
+                                label: "",
+                                value: "",
+                                dividerVariant: "middle",
+                                dividerColor: "#E4E4E7"
+                            }
+                        ],
+
+                        // Tasknet Node Server
+                        [
+                            {
+                                id: "label",
+                                label: "Node Server",
+                                type: "label",
+                                variant: "body1",
+                                color: "#1A1A1E",
+                                value: "Node Server"
                             },
+                        ],
+                        [
+                            {
+                                id: "v2WsProtocol",
+                                label: "Websocket Protocol",
+                                value: settings.v2WsProtocol,
+                                type: "select",
+                                isReadOnly: true,
+                                options: [
+                                    { label: "ws", value: "ws" },
+                                    { label: "wss", value: "wss" }
+                                ]
+                            },
+                            {
+                                id: "v2ServerIpOrDomain",
+                                label: "IP (domain or ip only)",
+                                isReadOnly: true,
+                                value: settings.v2ServerIpOrDomain,
+                                type: "text",
+                                hint: "The URL where your node server is running (e.g., localhost)"
+                            },
+                            {
+                                id: "v2ServerPort",
+                                label: "Port",
+                                isReadOnly: true,
+                                value: settings.v2ServerPort,
+                                type: "text",
+                                hint: "The port where your node server is running (e.g., 3000)"
+                            }
+                        ],
+                        [
+                            {
+                                id: "divider",
+                                type: "divider",
+                                label: "",
+                                value: "",
+                                dividerVariant: "middle",
+                                dividerColor: "#E4E4E7"
+                            }
+                        ],
+                        // Tasknet VNC Server
+                        [
+                            {
+                                id: "label",
+                                label: "VNC Proxy",
+                                type: "label",
+                                variant: "body1",
+                                color: "#1A1A1E",
+                                value: "VNC Server"
+                            },
+                        ],
+                        [
+                            {
+                                id: "vncProtocol",
+                                label: "Websocket Protocol",
+                                value: settings.vncProtocol,
+                                type: "select",
+                                isReadOnly: true,
+                                options: [
+                                    { label: "ws", value: "ws" },
+                                    { label: "wss", value: "wss" }
+                                ]
+                            },
+                            {
+                                id: "vncIPOrDomain",
+                                label: "IP (domain or ip only)",
+                                isReadOnly: true,
+                                value: settings.vncIPOrDomain,
+                                type: "text",
+                                hint: "The URL where your VNC server is running (e.g., vnc.tasknet.co)"
+                            },
+                            {
+                                id: "serverVncPort",
+                                label: "Port",
+                                isReadOnly: true,
+                                value: settings.serverVncPort,
+                                type: "text",
+                                hint: "The port where your VNC server is running (e.g., 443)"
+                            },
+                        ],
+                        [
+                            {
+                                id: "divider",
+                                type: "divider",
+                                label: "",
+                                value: "",
+                                dividerVariant: "middle",
+                                dividerColor: "#E4E4E7"
+                            }
+                        ],
+                        
+                        // Tasknet CDP Server
+                        [
+                            {
+                                id: "label",
+                                label: "CDP Proxy",
+                                type: "label",
+                                variant: "body1",
+                                color: "#1A1A1E",
+                                value: "CDP Server"
+                            },
+                        ],
+                        [
+                            {
+                                id: "cdpProtocol",
+                                label: "Websocket Protocol",
+                                value: settings.cdpProtocol,
+                                type: "select",
+                                isReadOnly: true,
+                                options: [
+                                    { label: "ws", value: "ws" },
+                                    { label: "wss", value: "wss" }
+                                ]
+                            },
+                            {
+                                id: "cdpIPOrDomain",
+                                label: "IP (domain or ip only)",
+                                isReadOnly: true,
+                                value: settings.cdpIPOrDomain,
+                                type: "text",
+                                hint: "The URL where your CDP server is running (e.g., cdp.tasknet.co)"
+                            },
+                            {
+                                id: "serverCdpPort",
+                                label: "Port",
+                                isReadOnly: true,
+                                value: settings.serverCdpPort,
+                                type: "text",
+                                hint: "The port where your CDP server is running (e.g., 443)"
+                            },
+                        ],
+                        [
+                            {
+                                id: "divider",
+                                type: "divider",
+                                label: "",
+                                value: "",
+                                dividerVariant: "middle",
+                                dividerColor: "#E4E4E7"
+                            }
+                        ],
+
+                        // Other settings
+                        [
                             {
                                 id: "dontConnectOnGoLive",
                                 label: "Don't connect to server on Go live",
@@ -162,6 +343,15 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                                 type: "password"
                             }
                         ],
+                        // [
+                        //     {
+                        //         id: "autoGoLiveOnAppStart",
+                        //         label: "Auto Go Live on App Start",
+                        //         value: (settings.autoGoLiveOnAppStart ?? false).toString(),
+                        //         type: "toggle",
+                        //         hint: "Automatically go live when the application starts"
+                        //     },
+                        // ],
                     ]}
                     onSavedFields={(fields: Record<string, string>) => {
                         onKeysChange({
@@ -376,6 +566,7 @@ export default function View({ publicKey, privateKey, settings, onKeysChange }: 
                                 id: "screenResolution",
                                 label: "Default Screen Resolution",
                                 value: settings.screenResolution,
+                                isReadOnly: true,
                                 type: "select",
                                 options: [
                                     { label: "1920x1080", value: "1920x1080" },

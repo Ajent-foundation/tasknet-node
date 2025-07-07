@@ -12,7 +12,7 @@ function flushLogFile(logFile: string, content: string) {
     fs.writeFileSync(logFile, content, 'utf-8');
 }
 
-export function readServiceLogs(_: IpcMainInvokeEvent, serviceName: string, logType: 'out' | 'err') {
+export function readServiceLogs(_: IpcMainInvokeEvent, serviceName: string, logType: 'out' | 'err' | "proxy") {
     try {
         if (serviceName === 'mobile-node') {
             const mobileLogFile = path.join(LOG_PATH, 'mobile-node.log');

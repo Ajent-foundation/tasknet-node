@@ -90,6 +90,7 @@
     "electron-updater": "^6.3.9",
     "fetch-ponyfill": "^7.1.0",
     "ghost-cursor": "^1.3.0",
+    "highlight.js": "^11.11.1",
     "html-minifier": "^4.0.0",
     "jimp": "^0.22.12",
     "jsdom": "^25.0.1",

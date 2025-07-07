@@ -15,7 +15,7 @@ declare global {
             storeClientInfo: (clientInfo: StoreData) => Promise<void>;
             getSystemInfo: () => Promise<StoreData['clientInfo']>;
             isConnected: () => Promise<boolean>;
-            readServiceLogs: (serviceName: string, logType: 'out' | 'err') => Promise<string>;
+            readServiceLogs: (serviceName: string, logType: 'out' | 'err' | "proxy") => Promise<string>;
             getServicesHealth: () => Promise<{service: string, isRunning: boolean}[]>;
             getServicesStatus: () => Promise<any>;
             checkDocker: () => Promise<boolean>;

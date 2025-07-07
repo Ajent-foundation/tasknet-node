@@ -1,7 +1,7 @@
 import { getSettings } from "../backend/handlers/settings";
 import { startBrowserManager, stopBrowserManager } from './browser-cmgr';
 import { startScraper, stopScraper } from './scraper-service';
-import { runMobileDockerContainer, isDockerInstalled, pullMobileDockerImage, killMobileDockerContainer, getMobileNodeConnectedDevices } from "./mobile";
+import { runMobileDockerContainer, pullMobileDockerImage, killMobileDockerContainer, getMobileNodeConnectedDevices } from "./mobile";
 import { spawn } from "child_process";
 
 export const services = ['scraper-service-ts','browsers-cmgr-ts'];
@@ -115,7 +115,6 @@ export async function startMobileNode() {
     try {
         const settings = getSettings();
         const mobileNodeApiKey = settings?.mobileNodeKey;
-        console.log("Starting mobile node with api key:", settings);
         if (!mobileNodeApiKey) {
             console.error("Mobile Node API key not set");
             return false;

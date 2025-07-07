@@ -13,15 +13,27 @@ export interface StoreData {
 }
 
 export interface Settings {
+    // General settings
+    autoGoLiveOnAppStart: boolean;
+    
     // Node settings
     nodeProtocol: string;
     wsProtocol: string;
     serverIpOrDomain: string;
     serverPort: string;
+    vncProtocol: string;
+    vncIPOrDomain: string;
+    serverVncPort: string;
+    cdpProtocol: string;
+    cdpIPOrDomain: string;
+    serverCdpPort: string;
     dontConnectOnGoLive: boolean;
     apiKeyId: string;
     apiKey: string;
-
+    v2ServerIpOrDomain: string;
+    v2ServerPort: string;
+    v2WsProtocol: string;
+    
     // Browser Container Manager settings
     browserManagerProtocol: string;
     browserManagerIpOrDomain: string;

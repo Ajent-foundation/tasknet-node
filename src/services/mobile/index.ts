@@ -10,7 +10,6 @@ export {
   runMobileDockerContainer,
   pullMobileDockerImage,
   killMobileDockerContainer,
-  isDockerInstalled,
 } from "../../docker";
 
 export { killAdbServer, startAdbServer, restartAdbServer } from "../../adb";
@@ -39,12 +38,10 @@ interface DevicesResult {
 }
 
 export async function getMobileNodeConnectedDevices(): Promise<DevicesResult> {
-  console.log("Requesting devices...");
   try {
     const response = await axios.get<DeviceResponse>(
       "http://127.0.0.1:8000/devices"
     );
-    console.log("Devices response:", response.data);
     return { devices: response.data?.data?.devices ?? [] };
   } catch (error) {
     const errorMessage =

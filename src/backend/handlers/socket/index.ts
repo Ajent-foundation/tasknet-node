@@ -5,14 +5,13 @@ import { app, BrowserWindow, powerSaveBlocker } from "electron";
 import { io } from "socket.io-client";
 import { getSettings } from "../settings";
 import { stopServices, runServices } from "../../../services";
-import { getDockerReport, getSystemReport } from "../system";
-import WebSocket from 'ws';
+import { getSystemReport } from "../system";
 import axios from "axios";
 import path from "path";
 import { pino } from 'pino'
 import { getDockerContainersCountByImageName } from "../../../docker";
+import { ProxyManager } from "./ProxyManager";
 
-const HEARTBEAT_INTERVAL = 5000;
 const UPLOAD_TEST_FILE_SIZE = 2 * 1024 * 1024;   // 2MB
 
 const BASE_LOGS_PATH = app.isPackaged 
@@ -20,7 +19,6 @@ const BASE_LOGS_PATH = app.isPackaged
     : __dirname;
 
 const POC_LOG_FILE = path.join(BASE_LOGS_PATH, "socket-service-out.log")
-
 
 const Logger = pino({
     level: 'info',
@@ -35,7 +33,6 @@ const Logger = pino({
     ] : [])
 ]))
 
-
 // Add at the top of the file after imports
 const responseCache = new Map<string, {
     response: {
@@ -48,23 +45,20 @@ const responseCache = new Map<string, {
 
 const CACHE_DURATION = 60 * 1000; 
 
-// Add heartbeat interval
-let heartbeatInterval: NodeJS.Timeout;
-
 // Add power blocker ID tracking
 let powerBlockerId: number | null = null;
 
 // Add connection monitoring
 let connectionMonitorInterval: NodeJS.Timeout;
 
+// Add proxy manager
+let proxyManager: ProxyManager | null = null;
+
 export async function connectSocket(
     mainWindow: BrowserWindow
 ){
     Logger.info('Attempting to connect socket');
     // Clear existing intervals to prevent leaks from multiple connections
-    if (heartbeatInterval) {
-        clearInterval(heartbeatInterval);
-    }
     if (connectionMonitorInterval) {
         clearInterval(connectionMonitorInterval);
     }
@@ -90,6 +84,12 @@ export async function connectSocket(
             return { status: 'already_connected' };
         }
 
+        // Initialize proxy manager
+        Logger.info(`Initializing proxy manager with clientId ${store.get('clientId')}`);
+        proxyManager = new ProxyManager(store.get('clientId') as string);
+        await proxyManager.connectAll();
+
+        Logger.info(`Connecting to socket with protocol ${settings.wsProtocol} and domain ${settings.serverIpOrDomain} and port ${settings.serverPort}`);
         globalState.socket = io(`${settings.wsProtocol}://${settings.serverIpOrDomain}:${settings.serverPort}`, {
             reconnection: true,
             reconnectionAttempts: Infinity,
@@ -113,15 +113,22 @@ export async function connectSocket(
             globalState.isConnected = true;
             mainWindow?.webContents.send('socket-status', 'connected');
 
-            const fullReport = await getDockerReport();
-            // Start heartbeat after connection
-            heartbeatInterval = setInterval(() => {
-                if (globalState.socket?.connected) {
-                    globalState.socket.emit('heartbeat', {
-                        fullReport: fullReport,
-                    });
+            // Start connection monitor after successful connection
+            connectionMonitorInterval = setInterval(() => {
+                if (!globalState.socket?.connected && globalState.isConnected) {
+                    globalState.socket?.close();  // Force close the existing socket
+                    globalState.socket?.connect(); // Attempt immediate reconnection
                 }
-            }, HEARTBEAT_INTERVAL);
+
+                // Check proxy connections
+                if (proxyManager) {
+                    const connectedProxies = proxyManager.getConnectedProxies();
+                    if (connectedProxies.length === 0) {
+                        Logger.warn('No proxies connected, attempting to reconnect all');
+                        proxyManager.connectAll();
+                    }
+                }
+            }, 5000); // Check every 5 seconds
 
             // Remove any existing listeners before adding new ones to prevent duplicates
             globalState.socket?.removeAllListeners('test-bandwidth');
@@ -139,6 +146,10 @@ export async function connectSocket(
                 } catch (error) {
                     console.error('Bandwidth test failed:', error);
                 }
+            });
+
+            globalState.socket.on('send-heartbeat', () => {
+                if (globalState.socket) globalState.socket.emit('heartbeat-1.8');
             });
 
             // Handle download test
@@ -168,14 +179,6 @@ export async function connectSocket(
             } else {
                 throw new Error("Client ID or client info not found");
             }
-
-            // Start connection monitor
-            connectionMonitorInterval = setInterval(() => {
-                if (!globalState.socket?.connected && globalState.isConnected) {
-                    globalState.socket?.close();  // Force close the existing socket
-                    globalState.socket?.connect(); // Attempt immediate reconnection
-                }
-            }, 5000); // Check every 30 seconds
         });
   
         globalState.socket.on('connect_error', (error) => {
@@ -406,110 +409,7 @@ export async function connectSocket(
                 }
             }
         });
-
-        // Handle WebSocket proxy routing
-        globalState.socket.on('proxy-ws-connect', async (message) => {
-            Logger.debug({ msg: 'WebSocket proxy connect request', requestId: message.requestId });
-            const { path, requestId } = message;
-            let localWs: WebSocket | null = null;
-            
-            try {
-                // First ensure any existing connection with the same requestId is cleaned up
-                globalState.socket?.emit(`proxy-ws-close:${requestId}`);
-                globalState.socket?.off(`proxy-ws-message:${requestId}`);
-
-                localWs = new WebSocket(`ws://localhost:${settings.scraperServicePort}${path}`);
-                const messageBuffer: Buffer[] = [];
-
-                // Set a connection timeout
-                const connectionTimeout = setTimeout(() => {
-                    if (localWs?.readyState !== WebSocket.OPEN) {
-                        localWs?.terminate();
-                        globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
-                            error: 'Connection timeout' 
-                        });
-                    }
-                }, 10000); // 10 second timeout
-
-                localWs.on('open', () => {
-                    clearTimeout(connectionTimeout);
-
-                    // Process any buffered messages
-                    while (messageBuffer.length > 0) {
-                        const data = messageBuffer.shift();
-                        if (localWs?.readyState === WebSocket.OPEN && data) {
-                            localWs.send(data);
-                        }
-                    }
-
-                    // Forward messages from cloud to local service
-                    const handleProxyMessage = (packet: {data: Buffer, type: string}) => {
-                        if (localWs?.readyState === WebSocket.OPEN) {
-                            localWs.send(packet.type === "utf8" ? packet.data.toString("utf8") : packet.data);
-                        } else {
-                            messageBuffer.push(packet.data);
-                        }
-                    };
-
-                    globalState.socket?.on(`proxy-ws-message:${requestId}`, handleProxyMessage);
-
-                    // Forward messages from local service to cloud
-                    localWs.on('message', (data) => {
-                        if (globalState.socket?.connected) {
-                            globalState.socket.emit(`proxy-ws-message:${requestId}`, data);
-                        }
-                    });
-
-                    // Handle WebSocket closure
-                    const cleanup = () => {
-                        globalState.socket?.off(`proxy-ws-message:${requestId}`);
-                        if (localWs) {
-                            if (localWs.readyState === WebSocket.OPEN) {
-                                localWs.close();
-                            } else if (localWs.readyState === WebSocket.CONNECTING) {
-                                localWs.terminate();
-                            }
-                            localWs = null;
-                        }
-                    };
-
-                    localWs.on('close', (code, reason) => {
-                        globalState.socket?.emit(`proxy-ws-close:${requestId}`);
-                        cleanup();
-                    });
-
-                    localWs.on('error', (error) => {
-                        globalState.socket?.emit(`proxy-ws-error:${requestId}`, { error: error.message });
-                        cleanup();
-                    });
-
-                    // Notify successful connection
-                    globalState.socket?.emit(`proxy-ws-connected:${requestId}`);
-                });
-
-                // Handle initial connection errors
-                localWs.on('error', (error) => {
-                    clearTimeout(connectionTimeout);
-                    console.error('WebSocket connection error:', error.message);
-                    globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
-                        error: `Failed to connect to local service: ${error.message}` 
-                    });
-                });
-            } catch (error) {
-                console.error('WebSocket setup error:', error);
-                globalState.socket?.emit(`proxy-ws-error:${requestId}`, { 
-                    error: `Failed to establish WebSocket connection: ${error.message}` 
-                });
-            }
-        });
-
-        // Handle WebSocket disconnect request
-        globalState.socket.on('proxy-ws-disconnect', (message) => {
-            Logger.debug({ msg: 'WebSocket disconnect request', requestId: message.requestId });
-            const { requestId } = message;
-            globalState.socket?.off(`proxy-ws-message:${requestId}`);
-        });
-
+        
         return { 
             status: 'connected'
         };
@@ -526,11 +426,6 @@ export async function  disconnectSocket(){
     Logger.info('Attempting to disconnect socket');
     globalState.isConnected = false;
     try {
-        // Clear all intervals
-        if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-            heartbeatInterval = null; // Add null assignment
-        }
         if (connectionMonitorInterval) {
             clearInterval(connectionMonitorInterval);
             connectionMonitorInterval = null; // Add null assignment
@@ -540,6 +435,12 @@ export async function  disconnectSocket(){
         if (powerBlockerId !== null) {
             powerSaveBlocker.stop(powerBlockerId);
             powerBlockerId = null;
+        }
+
+        // Disconnect all proxies
+        if (proxyManager) {
+            await proxyManager.disconnectAll();
+            proxyManager = null;
         }
 
         await stopServices(); // Add await

@@ -58,7 +58,7 @@ export default function Page() : JSX.Element {
     const [vncWindowOpen, setVncWindowOpen] = useState(false);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isMobileConnecting, setIsMobileConnecting] = useState(false);
-    const [logService, setLogService] = useState<"server" | "controller" | "api" | "mobile-node" | null>(null);
+    const [logService, setLogService] = useState<"server" | "controller" | "api" | "mobile-node" | "vnc-proxy" | "cdp-proxy" | "node-server" | null>(null);
     const [hasDocker, setHasDocker] = useState(false);
     const [myPoints, setMyPoints] = useState("Points: --");
     const [warning, setWarning] = useState<string | undefined>(undefined);
@@ -128,25 +128,25 @@ export default function Page() : JSX.Element {
     const items: TListItem[] = [
         {
             id: "dashboard",
-            icon: <img src={"static://assets/menu/dashboard.svg"} alt="dashboard" width={"100%"} height={"100%"} />,
+            icon: <img src={"static://assets/menu/dashboard.svg"} alt="dashboard" width={"24px"} height={"24px"} />,
             text: "Dashboard",
             show: true
         },
         {
             id: "browser",
-            icon: <img src={"static://assets/menu/browser.svg"} alt="world" width={"100%"} height={"100%"} />,
+            icon: <img src={"static://assets/menu/browser.svg"} alt="world" width={"24px"} height={"24px"} />,
             text: "Browser Nodes",
             show: true
         },
         {
             id: "logs",
-            icon: <img src={"static://assets/menu/info.svg"} alt="logs" width={"100%"} height={"100%"} />,
-            text: "Logs",
+            icon: <img src={"static://assets/menu/logs.svg"} alt="logs" width={"24px"} height={"24px"} />,
+            text: "Node Logs",
             show: false
         },
         {
             id: "settings",
-            icon: <img src={"static://assets/settings.svg"} alt="settings" width={"100%"} height={"100%"} />,
+            icon: <img src={"static://assets/menu/settings.svg"} alt="settings" width={"24px"} height={"24px"} />,
             text: "Settings",
             show: true
         }
@@ -157,11 +157,9 @@ export default function Page() : JSX.Element {
     useEffect(() => {
         // Only if socket is connected
         window.electronAPI.isConnected().then((isConnected) => {
-            if(isConnected) {
-                setIsLive(true);
-            }
+            setIsConnected(isConnected);
         });
-    }, []);
+    }, [isLive]);
     
     const [publicKey, setPublicKey] = useState<string | null>(null);
     const [privateKey, setPrivateKey] = useState<string | null>(null);
@@ -191,6 +189,9 @@ export default function Page() : JSX.Element {
         // Check if socket is connected
         window.electronAPI.isConnected().then((isConnected) => {
             console.log("Is connected", isConnected);
+            if(isConnected) {
+                setIsLive(true);
+            }
             setIsConnected(isConnected);
         });
 
@@ -239,6 +240,7 @@ export default function Page() : JSX.Element {
                 }
                 
                 const response = await window.electronAPI.connectSocket();
+                console.log("Connect socket response", response);
                 setIsConnected(status === 'connected');
                 setNumBrowsers(await window.electronAPI.getCurrentNumOfBrowsers());
             }
@@ -334,7 +336,8 @@ export default function Page() : JSX.Element {
                 sx={{
                     height: "100vh",
                     width: "100vw",
-                    background: "#FFFFFF"
+                    background: "#FFFFFF",
+                    overflow: "hidden"
                 }}
             >
                 {
@@ -465,6 +468,8 @@ export default function Page() : JSX.Element {
                                 gap={"24px"}
                                 marginLeft="24px"
                                 flexGrow={1}
+                                height="100%"
+                                overflow="hidden"
                             >
                                 <Box
                                     sx={{
@@ -472,7 +477,8 @@ export default function Page() : JSX.Element {
                                         gap: "8px",
                                         alignItems: "center",
                                         borderBottom: "1px solid #E4E4E7",
-                                        padding: "16px 24px 16px 24px"
+                                        padding: "16px 24px 16px 24px",
+                                        flexShrink: 0
                                     }}
                                 >
                                     <Box
@@ -504,6 +510,8 @@ export default function Page() : JSX.Element {
                                 <Box
                                     paddingRight="24px"
                                     flexGrow={1}
+                                    overflow="auto"
+                                    minHeight={0}
                                 >
                                     {
                                         view === "dashboard" ? 
@@ -535,7 +543,7 @@ export default function Page() : JSX.Element {
                                                 />
                                                 :
                                                 <Logs 
-                                                    serviceName={logService ?? "server"} 
+                                                    serviceName={logService ?? "server"}
                                                 />
                                     }
                                 </Box>
@@ -544,6 +552,8 @@ export default function Page() : JSX.Element {
                                 width="100%"
                                 height="22px"
                                 sx={{
+                                    display: "flex",
+                                    flexShrink: 0,
                                     background: "#FAFAFA",
                                     borderTop: "1px solid #E4E4E7"
                                 }}

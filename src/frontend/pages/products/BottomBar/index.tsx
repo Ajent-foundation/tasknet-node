@@ -7,8 +7,8 @@ export interface IProps {
     isApiRunning: boolean
     isConnectedToServer: boolean
     isMobileNodeRunning: boolean
-    onShowLogs: (service: "server" | "controller" | "api" | "mobile-node") => void
-    selectedService?: "server" | "controller" | "api" | "mobile-node"
+    onShowLogs: (service: "server" | "vnc-proxy" | "cdp-proxy" | "controller" | "api" | "mobile-node" | "node-server") => void
+    selectedService?: "server" | "vnc-proxy" | "cdp-proxy" | "controller" | "api" | "mobile-node" | "node-server"
     version: string | null
     nodeId: string | null
 }
@@ -45,6 +45,7 @@ export default function BottomBar({
             display="flex"
             flexDirection="row"
             justifyContent="space-between"
+            width={"100%"}
         >
             {/* Left */}
             <Box display="flex" gap={"8px"}>
@@ -89,11 +90,11 @@ export default function BottomBar({
                             backgroundColor: 'rgba(0, 0, 0, 0.04)'
                         },
                         cursor: "pointer",
-                        backgroundColor: selectedService === "server" ? "rgba(0, 0, 0, 0.04)" : "transparent"
+                        backgroundColor: selectedService === "vnc-proxy" ? "rgba(0, 0, 0, 0.04)" : "transparent"
                     }}
-                    onClick={() => isConnectedToServer ? onShowLogs("server") : {}}
+                    onClick={() => onShowLogs("node-server")}
                 >
-                    <Tooltip arrow title={isConnectedToServer ? "Connected to proxy server" : "Disconnected from proxy server"}>
+                    <Tooltip arrow title={isConnectedToServer ? "Connected to Node server" : "Disconnected from Node server"}>
                         <Box
                             display="flex"
                             flexDirection="row"
@@ -114,7 +115,91 @@ export default function BottomBar({
                             <Typography
                                 sx={textSx}
                             >
-                                Proxy
+                                Node Proxy
+                            </Typography>
+                        </Box>
+                    </Tooltip>
+                </Box>
+
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    gap={"8px"}
+                    sx={{
+                        paddingLeft: "8px",
+                        paddingRight: "8px",
+                        '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                        },
+                        cursor: "pointer",
+                        backgroundColor: selectedService === "vnc-proxy" ? "rgba(0, 0, 0, 0.04)" : "transparent"
+                    }}
+                    onClick={() => onShowLogs("vnc-proxy")}
+                >
+                    <Tooltip arrow title={isConnectedToServer ? "Connected to VNC proxy server" : "Disconnected from VNC proxy server"}>
+                        <Box
+                            display="flex"
+                            flexDirection="row"
+                            gap="4px"
+                            justifyContent="center"
+                        >
+                            <Box
+                                width="14px"
+                                height="14px"
+                            >
+                                {
+                                    isConnectedToServer ? 
+                                        <img src={"static://assets/greenDot.svg"} alt="Running" /> 
+                                        : 
+                                        <img src={"static://assets/redDot.svg"} alt="Stopped" />
+                                }
+                            </Box>
+                            <Typography
+                                sx={textSx}
+                            >
+                                VNC Proxy
+                            </Typography>
+                        </Box>
+                    </Tooltip>
+                </Box>
+
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    gap={"8px"}
+                    sx={{
+                        paddingLeft: "8px",
+                        paddingRight: "8px",
+                        '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                        },
+                        cursor: "pointer",
+                        backgroundColor: selectedService === "cdp-proxy" ? "rgba(0, 0, 0, 0.04)" : "transparent"
+                    }}
+                    onClick={() => onShowLogs("cdp-proxy")}
+                >
+                    <Tooltip arrow title={isConnectedToServer ? "Connected to CDP proxy server" : "Disconnected from CDP proxy server"}>
+                        <Box
+                            display="flex"
+                            flexDirection="row"
+                            gap="4px"
+                            justifyContent="center"
+                        >
+                            <Box
+                                width="14px"
+                                height="14px"
+                            >
+                                {
+                                    isConnectedToServer ? 
+                                        <img src={"static://assets/greenDot.svg"} alt="Running" /> 
+                                        : 
+                                        <img src={"static://assets/redDot.svg"} alt="Stopped" />
+                                }
+                            </Box>
+                            <Typography
+                                sx={textSx}
+                            >
+                                CDP Proxy
                             </Typography>
                         </Box>
                     </Tooltip>

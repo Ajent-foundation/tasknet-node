@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Typography } from "@mui/material";
 import { Stack, Paper } from "@mui/material";
+import WorldMap from "./WorldMap";
+
 export interface IClient {
     connectedAt: Date;
     id: string;
@@ -12,6 +14,8 @@ export interface IClient {
         cpuModel: string;
         hostname: string;
     }
+    country: string;
+    continent: string;
 }
 
 interface IProps {
@@ -37,8 +41,8 @@ export default function View({
         const fetchNodesInfo = () => {
             window.electronAPI.getNodesInfo()
                 .then(data => {
-                    setNodes(data.nodes)
-                    setLiveBrowsersNum(data.browsers)
+                    setNodes(data.nodes || [])
+                    setLiveBrowsersNum(data.browsers || 0)
                 })
                 .catch(err => console.error('Failed to fetch nodes:', err));
         };
@@ -269,11 +273,10 @@ export default function View({
                 gap={"24px"}
             >
                 {/* Nodes Info*/}
-                <Paper sx={paperSx}>
+                <Paper sx={{...paperSx, width: "100%"}}>
                     <Box
                         display="flex"
                         flexDirection={"row"}
-                        //justifyContent={"space-between"}
                     >
                         <Box
                             display="flex"
@@ -445,22 +448,16 @@ export default function View({
                                 </Box>
                             </Box>
                         </Box>
-                        <Box>
-                            <Box
-                                sx={{
-                                    borderRadius: "4px",
-                                    border: "1px solid #E4E4E7",
-                                    background: "#FFF",
-                                    boxShadow: "0px 1px 2px 0px rgba(16, 24, 40, 0.05)",
-                                }}
-                            >
-                                <img src={"static://assets/worldMap.svg"} alt="Nodes" />
-                            </Box>
-                        </Box>
                     </Box>
                 </Paper>
-
             </Box>
+
+            {/* World Map Section */}
+            {nodes.length > 0 && nodes.some(node => node.continent && node.country) && (
+                <Paper sx={{...paperSx, height: "auto", padding: "12px"}}>
+                    <WorldMap nodes={nodes} />
+                </Paper>
+            )}
 
             {/* Connected Devices */}
             {
