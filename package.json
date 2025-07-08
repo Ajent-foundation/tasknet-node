@@ -84,6 +84,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^8.2.0",
